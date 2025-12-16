@@ -137,6 +137,23 @@ class SimulatedRobot(SimulatedObject):
             constants.max_angular_acceleration * dt,
         )
 
+    def update_velocity_MLP(self, dt: float) -> None: #updating velovity via MLP
+        target_velocity_robot = self.control_cmd # entrée 1 du MLP (vecteur direction à suivre)
+        velocity_robot  = self.velocity # entrée 2 du MLP (vecteur vitesse actuel)
+
+        prediction_velocity_robot: np.ndarray = np.array([0.0, 0.0, 0.0]) # sortie du MPL (vitesse prédite)
+
+        # MLP ici
+        #   entrées : target_velocity_robot (objectif de vitesse pour le robot), velocity_robot (vitesse actuelle du robot)
+        #   sortie : prediction_velocity_robot
+
+        T_world_robot = utils.frame(tuple(self.position))
+        target_velocity_world = T_world_robot[:2, :2] @ prediction_velocity_robot[:2]
+
+        self.velocity[:2] = target_velocity_world
+        self.velocity[2:] = target_velocity_world[2:]
+
+
     def control_leds(self, r: int, g: int, b: int) -> None:
         self.leds = [r, g, b]
 
