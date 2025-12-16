@@ -1,0 +1,285 @@
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-size: 20px;
+    position: relative;
+}
+
+
+.waiting-screen {
+    position: fixed;
+    z-index: 1;
+    background-color: rgba(0, 0, 0, 0.8);
+    width: 100%;
+    height: 100%;
+    display: inherit;
+}
+
+.loader-text {
+    position: fixed;
+    text-align: center;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    top: calc(80%);
+    font-size: 50px;
+    color: white;
+}
+
+.loader-robot {
+    position: fixed;
+    z-index: 2;
+    left: calc(50% - 240px);
+    top: calc(40% - 240px);
+    width: 470px;
+    height: 470px;
+    animation: spin 5s linear infinite;
+    animation-play-state: running;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+        content: url("../imgs/robotblue1.svg");
+    }
+
+    25% {
+        content: url("../imgs/robotgreen1.svg");
+    }
+
+    50% {
+        content: url("../imgs/robotblue2.svg");
+    }
+
+    75% {
+        content: url("../imgs/robotgreen2.svg");
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.sim_vim {
+    position: absolute;
+    z-index: 0;
+    opacity: 100;
+}
+
+.style_fps {
+    background-color: #333;
+    margin-left: 0px;
+    font-size: 28px;
+    text-align: center;
+    min-width: 5em;
+}
+
+.card {
+    filter: drop-shadow(-5px 5px 5px #ccc);
+    margin-bottom: 20px;
+}
+
+.camera-area-referee {
+    width: 100%;
+    height: calc(100vh - 357px);
+}
+
+.tchat-dim {
+    height: calc(100vh - 477px)
+}
+
+.emergency-button {
+    position: fixed;
+    right: 5px;
+    bottom: 5px;
+}
+
+.settings-button {
+    position: absolute;
+    left: 18px;
+    top: 84px;
+}
+
+.camera-setting label {
+    text-align: right;
+    font-weight: bold;
+}
+
+.invisible {
+    opacity: 0;
+}
+
+.vision-show-running {
+    display: none;
+}
+
+.vision-running .vision-show-running {
+    display: block;
+}
+
+.vision-running .vision-hide-running {
+    display: none;
+}
+
+.vision-has-no-error {
+    display: none;
+}
+
+.vision-no-error .vision-has-no-error {
+    display: inline;
+}
+
+.vision-no-error .vision-has-error {
+    display: none;
+}
+
+
+.nav-item {
+    background-color: #333;
+    margin-right: 5px;
+}
+
+.nav-link {
+    border-radius: 5px;
+    border: 2px solid transparent;
+}
+
+.nav-link.active {
+    background-color: #444;
+    border: 2px solid white;
+}
+
+.robots-show-warning {
+    display: none;
+}
+
+.control-show-warning {
+    display: none;
+}
+
+.robots-warning .robots-show-warning {
+    display: inline;
+}
+
+.control-warning .control-show-warning {
+    display: inline;
+}
+
+.detection-wrapper {
+    min-height: 150px;
+}
+
+.bg-head-green {
+    background-color: rgb(10, 148, 0);
+}
+
+.bg-body-green {
+    background-color: rgba(10, 148, 0, 0.205);
+}
+
+.border-green {
+    border: 1px solid rgb(10, 148, 0);
+}
+
+/* .green-toast-position{
+} */
+
+.form_green_border:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+
+
+/* .bg-head-neutral{
+}
+.bg-body-neutral{
+}
+.border-neutral{
+} */
+
+.neutral-toast-position {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.text-blue {
+    color: rgb(3, 102, 184);
+}
+
+.text-green {
+    color: rgba(10, 148, 0);
+}
+
+.bg-head-blue {
+    background-color: rgb(3, 102, 184);
+}
+
+.bg-body-blue {
+    background-color: rgb(3, 102, 184, 0.205);
+}
+
+.border-blue {
+    border: 1px solid rgb(3, 102, 184);
+}
+
+.blue-toast-position {
+    margin-left: auto;
+    margin-right: 0;
+}
+
+.bg-body-grey {
+    background-color: rgba(180, 180, 180, 0.205);
+}
+
+.bg-body-red {
+    background-color: rgba(250, 53, 69, 1);
+}
+
+.vert-align {
+    display: flex;
+    align-items: center;
+}
+
+div.progress {
+    margin: 0;
+}
+
+.progress-large {
+    height: 20px;
+}
+
+.card-header {
+    text-transform: capitalize;
+}
+
+.competition-mode {
+    display: none;
+}
+
+.scheduler-mode {
+    display: none;
+}
+
+.blinking {
+    animation: blinker 1s linear infinite;
+}
+
+@keyframes blinker {
+    50% {
+        opacity: 0.5;
+    }
+}
+
+#back {
+    object-fit: contain;
+}
+
+.no-backend {
+    position:relative;
+}
+
+.scheduler-game-row-selected, .scheduler-game-row-selected tr {
+    background-color: rgba(255, 200, 0, 0.206);

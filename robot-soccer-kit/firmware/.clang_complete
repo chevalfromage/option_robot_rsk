@@ -1,0 +1,5 @@
+-IMaple/LibMaple/libmaple/include/
+-IMaple/LibMaple/wirish/include/
+-IMaple/LibMaple/wirish/boards/maple_mini/include/
+-IMaple/LibRhoban/
+-IMaple/Rhock/src/

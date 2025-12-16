@@ -1,0 +1,9 @@
+deploy.sh
+Maple
+Rhock
+rhock
+build
+**.pch
+.pio
+old
+.vscode
