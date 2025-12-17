@@ -1,0 +1,11 @@
+numpy
+pyzmq
+pyyaml
+astar
+
+[gc]
+pyserial
+flask>=2
+flask-cors
+waitress
+opencv-contrib-python

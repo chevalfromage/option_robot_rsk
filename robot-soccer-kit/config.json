@@ -1,0 +1,1 @@
+{"camera": {"favourite_index": 0, "resolution": 14, "settings": {"brightness": 25, "contrast": 60, "crop_x": 100, "crop_y": 100, "exposure": 1, "focal": 885, "gain": 1, "rescale": 100, "saturation": 75}}, "robots": [["sim://green1", "green1"], ["sim://green2", "green2"], ["sim://blue1", "blue1"], ["sim://blue2", "blue2"]]}

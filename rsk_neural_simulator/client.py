@@ -6,9 +6,9 @@ import json
 DT = 1/30  # 30 FPS
 
 targets = [(0.3, 0.3, 0.0), (0.3, -0.3, np.pi/2), (-0.3, -0.3, 0.0), (-0.3, 0.3, -np.pi/2)]
-duration = 10  # [s]
+duration = 15  # [s]
 
-with rsk.Client(host="192.168.100.1") as client:
+with rsk.Client(host="127.0.0.1") as client:
     robot = client.green1
 
     # Placing the robot in initial position
@@ -24,7 +24,6 @@ with rsk.Client(host="192.168.100.1") as client:
                 "robot_pose": list(robot.pose),
                 "ball_position": list(client.ball)}
         states.append(state)
-
     client.on_update = get_state
 
     # Main loop to move the robot between targets

@@ -70,6 +70,7 @@ class ClientTracked:
         self.pose = None
         self.orientation = None
         self.last_update = None
+        self.velocity = None # pour récupérer la vitesse pour le MLP
 
 
 class ClientRobot(ClientTracked):

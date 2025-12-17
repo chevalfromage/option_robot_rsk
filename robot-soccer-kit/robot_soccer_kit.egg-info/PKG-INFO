@@ -1,0 +1,35 @@
+Metadata-Version: 2.4
+Name: robot_soccer_kit
+Version: 2.4.10
+Summary: Robot Soccer Kit
+Author-email: Rhoban team <team@rhoban.com>
+Project-URL: Homepage, https://robot-soccer-kit.github.io/
+Project-URL: Repository, https://github.com/robot-soccer-kit/robot-soccer-kit/
+Keywords: robot,holonomic,omniwheel,ssl,sct,robocup,junior,soccer,standard,localized,tracking
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy
+Requires-Dist: pyzmq
+Requires-Dist: pyyaml
+Requires-Dist: astar
+Provides-Extra: gc
+Requires-Dist: pyserial; extra == "gc"
+Requires-Dist: flask>=2; extra == "gc"
+Requires-Dist: flask-cors; extra == "gc"
+Requires-Dist: waitress; extra == "gc"
+Requires-Dist: opencv-contrib-python; extra == "gc"
+Dynamic: license-file
+
+# Robot Soccer Kit
+
+![Robots](/docs/imgs/cover-2022.jpg)
+
+## Presentation
+
+* [YouTube demonstration video](https://www.youtube.com/watch?v=4NFXbaom7YQ)
+* [Documentation](https://robot-soccer-kit.github.io)
+
+## License
+
+<a rel="license" href="http://creativecommons.org/licenses/by-nc/2.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/2.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc/2.0/">Creative Commons Attribution-NonCommercial 2.0 Generic License</a>.
