@@ -2,6 +2,7 @@ numpy
 pyzmq
 pyyaml
 astar
+torch
 
 [gc]
 pyserial

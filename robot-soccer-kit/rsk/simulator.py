@@ -138,7 +138,7 @@ class SimulatedRobot(SimulatedObject):
         )
 
     def update_velocity_MLP(self, dt: float) -> None: #updating velovity via MLP
-        target_velocity_robot = self.control_cmd # entrée 1 du MLP (vecteur direction à suivre)
+        target_velocity_robot = self.control_cmd # entrée 1 du MLP (vecteur direction à suivre) // pas bon c'est pas la vitesse du robot mais la vitesse 
         velocity_robot  = self.velocity # entrée 2 du MLP (vecteur vitesse actuel)
 
         prediction_velocity_robot: np.ndarray = np.array([0.0, 0.0, 0.0]) # sortie du MPL (vitesse prédite)
@@ -319,8 +319,11 @@ class Simulator:
         if self.state is not None:
             for marker in self.objects:
                 pos = self.objects[marker].position
+                vel = self.objects[marker].velocity
                 if marker == "ball":
                     self.state.set_ball(pos[:2].tolist())
+                    self.state.set_velocity("ball", vel[:2].tolist(), vel[2])
                 else:
                     self.state.set_marker(marker, pos[:2].tolist(), pos[2])
+                    self.state.set_velocity(marker, vel[:2].tolist(), vel[2])
                     self.state.set_leds(marker, self.objects[marker].leds)

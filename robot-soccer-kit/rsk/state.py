@@ -10,6 +10,7 @@ class State:
             frequency_pub (int, optional): publication frequency [Hz]
         """
         self.markers: dict = {}
+        self.velocity: dict = {}
         self.ball = None
         self.last_updates: dict = {}
         self.referee: dict = {}
@@ -23,6 +24,7 @@ class State:
     def get_state(self):
         return {
             "markers": self.markers,
+            "velocity": self.velocity,
             "ball": self.ball,
             "referee": self.referee,
             "leds": self.leds,
@@ -74,6 +76,14 @@ class State:
             self.markers[marker]["position"] = position
             self.markers[marker]["orientation"] = orientation
         self.last_updates[marker] = time.time()
+
+    @_refresh
+    def set_velocity(self, marker: str, velocity_xy: list[float], angular: float):
+        self.velocity[marker] = {
+            "linear": velocity_xy,
+            "angular": angular,
+        }
+
 
     @_refresh
     def set_ball(self, position):

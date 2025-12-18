@@ -153,12 +153,15 @@ class Robots:
             data[entry] = {
                 "state": self.robots[entry].state,
                 "marker": self.robots[entry].marker,
+                "velocity": self.robots[entry].velocity,
                 "last_detection": last_detection,
                 "last_message": time.time() - self.robots[entry].last_message
                 if self.robots[entry].last_message is not None
                 else None,
             }
-
+        if data.get("velocity"):
+            print(data["velocity"])
+        
         return data
 
     def set_marker(self, url: str, marker: str) -> None:

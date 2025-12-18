@@ -13,6 +13,7 @@ Requires-Dist: numpy
 Requires-Dist: pyzmq
 Requires-Dist: pyyaml
 Requires-Dist: astar
+Requires-Dist: torch
 Provides-Extra: gc
 Requires-Dist: pyserial; extra == "gc"
 Requires-Dist: flask>=2; extra == "gc"

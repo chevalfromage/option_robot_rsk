@@ -20,6 +20,7 @@ rsk/field.py
 rsk/game_controller.py
 rsk/kinematics.py
 rsk/logger.py
+rsk/model_test.py
 rsk/packets.py
 rsk/path_finder.py
 rsk/place.py
