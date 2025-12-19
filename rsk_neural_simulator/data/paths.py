@@ -4,12 +4,17 @@ whereas it's a waypointPath, or a parametricPath
 '''
 
 import time
+import random
 from typing import Callable, List, Optional, Sequence, Tuple
-
+from rsk import constants as rsk_constants
 import numpy as np
 
-MAX_X = 0.45
-MAX_Y = 0.45
+# Fixer la seed pour la reproductibilité
+np.random.seed(42)  # Pour numpy (utilisé dans les calculs trigonométriques ou aléatoires)
+random.seed(42)     # Pour le module random standard de Python
+
+MAX_X = rsk_constants.field_length / 2
+MAX_Y = rsk_constants.field_width / 2
 
 Pose = Tuple[float, float, float]
 
@@ -54,6 +59,7 @@ class WaypointPath(BasePath):
         self.waypoints = list(waypoints)
         self.tolerance = tolerance
         self.theta_tolerance = theta_tolerance if theta_tolerance is not None else tolerance
+
         self._index = 0
         self._finished = False
 
@@ -198,8 +204,17 @@ path6 = ParametricPath(
     duration=20.0,
 )
 
+# Waypoints aléatoires reproductibles (générés une fois grâce à la seed)
+RANDOM_WAYPOINTS = [
+    (random.uniform(-MAX_X, MAX_X), random.uniform(-MAX_Y, MAX_Y), random.uniform(-np.pi, np.pi)) for _ in range(10)
+]
 
-DEFAULT_PATHS: List[BasePath] = [path1, path2, path3, path4, path5, path6]
+path7 = WaypointPath(
+    "random_waypoints",
+    RANDOM_WAYPOINTS,
+)
+
+DEFAULT_PATHS: List[BasePath] = [path7]
 
 
 

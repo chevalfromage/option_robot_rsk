@@ -98,7 +98,7 @@ def park_robot(robot, robot_key: str) -> None:
     robot.control(0, 0, 0)
 
 
-with rsk.Client(host="127.0.0.1") as client:
+with rsk.Client(host="192.168.100.1") as client:
     for robot_key in ROBOT_MAP:
         try:
             record_paths_for_robot(client, robot_key)
