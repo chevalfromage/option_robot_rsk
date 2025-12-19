@@ -23,10 +23,10 @@ ROBOT_MAP = {
     "b2": "blue2",
 }
 PARKING_POSES = {
-    "g1": (0.2, rsk_constants.field_width / 2 + 20, -math.pi / 2),
-    "g2": (0.6, rsk_constants.field_width / 2 + 20, -math.pi / 2),
-    "b1": (-0.2, rsk_constants.field_width / 2 + 20, -math.pi / 2),
-    "b2": (-0.6, rsk_constants.field_width / 2 + 20, -math.pi / 2),
+    "g1": (0.2, rsk_constants.field_width / 2 - 20, -math.pi / 2),
+    "g2": (0.6, rsk_constants.field_width / 2 - 20, -math.pi / 2),
+    "b1": (-0.2, rsk_constants.field_width / 2 - 20, -math.pi / 2),
+    "b2": (-0.6, rsk_constants.field_width / 2 - 20, -math.pi / 2),
 }
 
 

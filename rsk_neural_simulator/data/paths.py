@@ -194,19 +194,19 @@ path4 = WaypointPath(
 path5 = ParametricPath(
     "circle_in",
     pose_fn=lambda elapsed: _circle_pose((0.0, 0.0), MAX_Y, 0.5, elapsed),
-    duration=20.0,
+    duration=40.0,
 )
 
 # infini en regardant à l'exté des rotations
 path6 = ParametricPath(
     "lemniscate_out",
     pose_fn=lambda elapsed: _lemniscate_pose(MAX_Y, 0.6, elapsed),
-    duration=20.0,
+    duration=40.0,
 )
 
 # Waypoints aléatoires reproductibles (générés une fois grâce à la seed)
 RANDOM_WAYPOINTS = [
-    (random.uniform(-MAX_X, MAX_X), random.uniform(-MAX_Y, MAX_Y), random.uniform(-np.pi, np.pi)) for _ in range(10)
+    (random.uniform(-MAX_X, MAX_X), random.uniform(-MAX_Y, MAX_Y), random.uniform(-np.pi, np.pi)) for _ in range(25)
 ]
 
 path7 = WaypointPath(
@@ -214,7 +214,7 @@ path7 = WaypointPath(
     RANDOM_WAYPOINTS,
 )
 
-DEFAULT_PATHS: List[BasePath] = [path7]
+DEFAULT_PATHS: List[BasePath] = [path1, path2, path3, path4, path5, path6, path7]
 
 
 
