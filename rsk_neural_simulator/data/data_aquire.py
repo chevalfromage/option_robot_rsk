@@ -48,7 +48,7 @@ def record_paths_for_robot(client: rsk.Client, robot_key: str) -> None:
             time.sleep(2)
 
         path_samples = []
-        last_tick = time.monotonic()
+
         while True:
             target_pose = path.current_target()
             _, orders = robot.goto_compute_order(target_pose)
@@ -56,6 +56,7 @@ def record_paths_for_robot(client: rsk.Client, robot_key: str) -> None:
 
             pose = robot.pose if robot.pose is not None else (None, None, None)
             ball = client.ball if client.ball is not None else (None, None)
+
             path_samples.append(
                 {
                     "timestamp": time.monotonic() - run_start,
@@ -70,10 +71,6 @@ def record_paths_for_robot(client: rsk.Client, robot_key: str) -> None:
 
             finished = path.update(robot.pose)
 
-            last_tick += DT
-            while time.monotonic() < last_tick:
-                time.sleep(1e-3)
-
             if finished:
                 break
 
@@ -81,6 +78,7 @@ def record_paths_for_robot(client: rsk.Client, robot_key: str) -> None:
         destination.parent.mkdir(parents=True, exist_ok=True)
         with destination.open("w", encoding="utf-8") as f:
             json.dump(path_samples, f, indent=4)
+
         print(f"Data saved to {destination}")
 
     park_robot(robot, robot_key)
