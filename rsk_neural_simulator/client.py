@@ -42,7 +42,7 @@ with rsk.Client(host="127.0.0.1") as client:
         
         t += DT
         while time.monotonic() - t_start < t:
-            time.sleep(1e-3)
+            time.sleep(1e-3) #trop rapide, des données sont prises sans que la position du robot ne soit actualisé
 
     robot.control(0, 0, 0)
 

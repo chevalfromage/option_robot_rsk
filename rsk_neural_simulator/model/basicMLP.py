@@ -86,7 +86,7 @@ Y_val_t = torch.tensor(Y_val_scaled, dtype=torch.float32)
 X_test_t = torch.tensor(X_test_scaled, dtype=torch.float32)
 Y_test_t = torch.tensor(Y_test_scaled, dtype=torch.float32)
 
-# 1. Définir le modèle
+#def du modèle
 class SimpleNN(nn.Module):
     def __init__(self):
         super().__init__()
@@ -102,10 +102,8 @@ class SimpleNN(nn.Module):
         )
 
     def forward(self, x):
-        # Passage avant : simplement appliquer la couche linéaire
         return self.net(x)
 
-# 2. Créer le modèle
 model = SimpleNN()
 
 # 3. Définir une fonction de perte et un optimiseur
@@ -114,12 +112,12 @@ optimizer = optim.Adam(model.parameters(), lr=10e-4)  # descente de gradient
 
 # print(targets)
 
-# 5. Entraînement minimal : une itération
+# entrainement
 
 epochs = 500
 
 for epoch in range(epochs):
-    # --- TRAIN ---
+    # train
     model.train()
     optimizer.zero_grad()
 
@@ -129,7 +127,7 @@ for epoch in range(epochs):
     train_loss.backward()
     optimizer.step()
 
-    # --- VALIDATION ---
+    # validation
     model.eval()
     with torch.no_grad():
         val_preds = model(X_val_t)

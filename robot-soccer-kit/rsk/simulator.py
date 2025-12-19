@@ -183,6 +183,9 @@ class RobotSim(robot.Robot):
             np.array([dx, dy, dturn])
         )
 
+    def controlMLP(self, dx: float, dy: float, dturn: float) -> None:
+        self.object.control_cmd = np.array([dx, dy, dturn])
+
     def kick(self, power: float = 1.0) -> None:
         self.object.pending_actions.append(lambda: self.object.compute_kick(power))
 
