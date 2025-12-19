@@ -9,11 +9,13 @@ from sklearn.preprocessing import StandardScaler
 import os
 import glob
 
-base_path = "../data/clean/irl"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+base_path = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "data", "clean", "irl"))
 
 all_dfs = []
 
-for json_path in glob.glob(os.path.join(base_path, "**", "*.json"), recursive=True):
+json_pattern = os.path.join(base_path, "**", "*.json")
+for json_path in glob.glob(json_pattern, recursive=True):
     with open(json_path) as f:
         data = json.load(f)
 
@@ -21,6 +23,12 @@ for json_path in glob.glob(os.path.join(base_path, "**", "*.json"), recursive=Tr
     df_tmp["source_file"] = json_path  # optionnel mais très utile pour debug
 
     all_dfs.append(df_tmp)
+
+if not all_dfs:
+    raise FileNotFoundError(
+        f"Aucun fichier JSON trouvé via le motif {json_pattern}.\n"
+        "Vérifie que les données nettoyées sont présentes et que tu exécutes le script dans l'environnement attendu."
+    )
 
 df = pd.concat(all_dfs, ignore_index=True)
 
@@ -50,11 +58,11 @@ Y = df[Y_cols]
 SEED = 42
 
 X_temp, X_test, Y_temp, Y_test = train_test_split(
-    X, Y, test_size=0.10, random_state=SEED, shuffle=True
+    X, Y, test_size=0.2, random_state=SEED, shuffle=True
 )
 
 X_train, X_val, Y_train, Y_val = train_test_split(
-    X_temp, Y_temp, test_size=0.1111111111, random_state=SEED, shuffle=True
+    X_temp, Y_temp, test_size=0.4, random_state=SEED, shuffle=True
 )
 
 print(X_train.shape, X_val.shape, X_test.shape)
@@ -83,9 +91,14 @@ class SimpleNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(6, 128),   # couche cachée
-            nn.ReLU(),           # non-linéarité
-            nn.Linear(128, 3)    # sortie
+            nn.Linear(6, 256),  
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(256, 128), 
+            nn.ReLU(),
+            nn.Linear(128, 128), 
+            nn.ReLU(),
+            nn.Linear(128, 3)  # couche de sortie
         )
 
     def forward(self, x):
@@ -96,14 +109,14 @@ class SimpleNN(nn.Module):
 model = SimpleNN()
 
 # 3. Définir une fonction de perte et un optimiseur
-criterion = nn.MSELoss()  # erreur quadratique moyenne
-optimizer = optim.Adam(model.parameters(), lr=0.001)  # descente de gradient
+criterion = nn.L1Loss()  # erreur quadratique moyenne
+optimizer = optim.Adam(model.parameters(), lr=10e-4)  # descente de gradient
 
 # print(targets)
 
 # 5. Entraînement minimal : une itération
 
-epochs = 1300
+epochs = 500
 
 for epoch in range(epochs):
     # --- TRAIN ---
@@ -142,3 +155,35 @@ with torch.no_grad():
     train_loss_eval = criterion(train_preds_eval, Y_train_t)
 
 print("Train (eval) MSE :", train_loss_eval.item())
+
+# function to research of the best learning rate
+#import matplotlib.pyplot as plt
+#lrs = []
+#losses = []
+#for i in range(100):
+#    lr = 1e-7 * (10 ** (i / 20))  # de 1e-7 à environ 1
+#    lrs.append(lr)
+#
+#    optimizer = optim.Adam(model.parameters(), lr=lr)
+#
+#    model.train()
+#    optimizer.zero_grad()
+#
+#    preds = model(X_train_t)
+#    loss = criterion(preds, Y_train_t)
+#
+#    loss.backward()
+#    optimizer.step()
+#
+#    losses.append(loss.item())
+#    
+#plt.plot(lrs, losses)
+#plt.xscale('log')
+#plt.xlabel("Learning Rate")
+#plt.ylabel("Training Loss")
+#plt.title("Learning Rate Finder")
+#plt.grid(True)
+#plt.show()
+#plt.savefig("learning_rate_finder.png")
+#
+#print(f"Figure saved to learning_rate_finder.png")

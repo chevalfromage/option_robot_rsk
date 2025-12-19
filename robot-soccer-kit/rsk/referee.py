@@ -584,9 +584,9 @@ class Referee:
                                 self.timed_circle_timers[robot]
                                 > constants.timed_circle_time
                             ):
-                                self.add_penalty(
+                                """ self.add_penalty(
                                     constants.default_penalty, marker, "ball_abuse"
-                                )
+                                ) """
                     else:
                         self.timed_circle_timers[(team, number)] = None
                 else:
@@ -601,9 +601,9 @@ class Referee:
 
                     # This is penalizing robots for abusive attack (suspended)
                     if utils.in_rectangle(robot_position, *opponent_defense_area):
-                        self.add_penalty(
+                        """ self.add_penalty(
                             constants.default_penalty, marker, "abusive_attack"
-                        )
+                        ) """
 
                     if utils.in_rectangle(robot_position, *my_defense_area):
                         if team in defender:
@@ -613,11 +613,11 @@ class Referee:
                             if abs(other_robot_position[0]) < abs(robot_position[0]):
                                 robot_to_penalize = other_robot
 
-                            self.add_penalty(
+                            """ self.add_penalty(
                                 constants.default_penalty,
                                 robot_to_penalize,
                                 "abusive_defense",
-                            )
+                            ) """
                         else:
                             defender[team] = [marker, robot_position]
 
