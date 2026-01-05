@@ -8,6 +8,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import os
 import glob
+import joblib
+from SimpleNN import SimpleNN
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 base_path = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "data", "clean", "irl"))
@@ -86,23 +88,6 @@ Y_val_t = torch.tensor(Y_val_scaled, dtype=torch.float32)
 X_test_t = torch.tensor(X_test_scaled, dtype=torch.float32)
 Y_test_t = torch.tensor(Y_test_scaled, dtype=torch.float32)
 
-#def du modèle
-class SimpleNN(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(6, 256),  
-            nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(256, 128), 
-            nn.ReLU(),
-            nn.Linear(128, 128), 
-            nn.ReLU(),
-            nn.Linear(128, 3)  # couche de sortie
-        )
-
-    def forward(self, x):
-        return self.net(x)
 
 model = SimpleNN()
 
@@ -153,6 +138,13 @@ with torch.no_grad():
     train_loss_eval = criterion(train_preds_eval, Y_train_t)
 
 print("Train (eval) MSE :", train_loss_eval.item())
+
+print("Sauvegarde du modèle ...")
+os.makedirs("trained_model", exist_ok=True)
+torch.save(model.state_dict(), "trained_model/simple_nn.pth")
+joblib.dump(x_scaler, "trained_model/x_scaler.pkl")
+joblib.dump(y_scaler, "trained_model/y_scaler.pkl")
+print("Modèle sauvegardé")
 
 # function to research of the best learning rate
 #import matplotlib.pyplot as plt

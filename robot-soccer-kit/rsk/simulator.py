@@ -7,6 +7,17 @@ from . import kinematics, utils, constants, state, robot, robots, client
 
 from collections.abc import Callable
 
+import sys
+import os
+
+# PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+# sys.path.append(PROJECT_ROOT)
+
+import torch
+from rsk_neural_simulator.model.SimpleNN import SimpleNN
+
+import joblib
+
 
 class SimulatedObject:
     def __init__(
@@ -95,6 +106,12 @@ class SimulatedRobot(SimulatedObject):
         self.control_cmd: np.ndarray = np.array([0.0, 0.0, 0.0])
         self.leds = None  # [R,G,B] (0-255) None for off
 
+        self.model = SimpleNN()
+        self.model.load_state_dict(torch.load("rsk_neural_simulator/model/trained_model/simple_nn.pth"))
+        self.model.eval()
+        self.x_scaler = joblib.load("rsk_neural_simulator/model/trained_model/x_scaler.pkl")
+        self.y_scaler = joblib.load("rsk_neural_simulator/model/trained_model/y_scaler.pkl")
+
     def compute_kick(self, power: float) -> None:
         # Robot to ball vector, expressed in world
         ball_world = self.sim.objects["ball"].position[:2]
@@ -120,7 +137,7 @@ class SimulatedRobot(SimulatedObject):
                 T_world_robot[:2, :2] @ ball_speed_robot
             )
 
-    def update_velocity(self, dt: float) -> None:
+    def update_velocity_original(self, dt: float) -> None:
         target_velocity_robot = self.control_cmd
 
         T_world_robot = utils.frame(tuple(self.position))
@@ -137,8 +154,8 @@ class SimulatedRobot(SimulatedObject):
             constants.max_angular_acceleration * dt,
         )
 
-    def update_velocity_MLP(self, dt: float) -> None: #updating velovity via MLP
-        target_velocity_robot = self.control_cmd # entrée 1 du MLP (vecteur direction à suivre) // pas bon c'est pas la vitesse du robot mais la vitesse 
+    def update_velocity(self, dt: float) -> None: #updating velovity via MLP
+        target_velocity_robot = self.control_cmd # entrée 1 du MLP (vecteur direction à suivre) // bon car changement de la fonction control 
         velocity_robot  = self.velocity # entrée 2 du MLP (vecteur vitesse actuel)
 
         prediction_velocity_robot: np.ndarray = np.array([0.0, 0.0, 0.0]) # sortie du MPL (vitesse prédite)
@@ -147,11 +164,24 @@ class SimulatedRobot(SimulatedObject):
         #   entrées : target_velocity_robot (objectif de vitesse pour le robot), velocity_robot (vitesse actuelle du robot)
         #   sortie : prediction_velocity_robot
 
+        x_input = np.concatenate([target_velocity_robot, velocity_robot]).reshape(1, -1)
+        x_scaled = self.x_scaler.transform(x_input)
+        x_tensor = torch.tensor(x_scaled, dtype=torch.float32)
+        with torch.no_grad():
+            y_scaled = self.model(x_tensor)
+        y_scaled = y_scaled.cpu().numpy()
+        prediction_velocity_robot = self.y_scaler.inverse_transform(y_scaled)[0]
+
+        print(prediction_velocity_robot)
+
+        #fin du MLP
+
         T_world_robot = utils.frame(tuple(self.position))
         target_velocity_world = T_world_robot[:2, :2] @ prediction_velocity_robot[:2]
 
         self.velocity[:2] = target_velocity_world
-        self.velocity[2:] = target_velocity_world[2:]
+
+        # print(f" velocity : {self.velocity}")
 
 
     def control_leds(self, r: int, g: int, b: int) -> None:
@@ -178,12 +208,12 @@ class RobotSim(robot.Robot):
         """
         self.object.teleport(x, y, turn)
 
-    def control(self, dx: float, dy: float, dturn: float) -> None:
+    def control_original(self, dx: float, dy: float, dturn: float) -> None:
         self.object.control_cmd = kinematics.clip_target_order(
             np.array([dx, dy, dturn])
         )
 
-    def controlMLP(self, dx: float, dy: float, dturn: float) -> None:
+    def control(self, dx: float, dy: float, dturn: float) -> None:
         self.object.control_cmd = np.array([dx, dy, dturn])
 
     def kick(self, power: float = 1.0) -> None:
