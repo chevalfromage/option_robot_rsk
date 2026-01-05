@@ -425,7 +425,7 @@ class Control:
         self.client = client.Client(key=self.master_key, wait_ready=False)
 
         while self.running:
-            self.ensure_robots_on_field()
+            #self.ensure_robots_on_field()
             robots_ticked = self.tick_tasks()
             self.update_robots_colors(robots_ticked)
 
