@@ -1,6 +1,6 @@
 """
 Collecte de données pour diverses trajectoires de robot RSK.
-
+(trajectoires définies dans data/paths.py)
 """
 
 
@@ -12,16 +12,22 @@ from pathlib import Path
 import rsk
 from rsk import constants as rsk_constants
 
-from paths import DEFAULT_PATHS, BasePath
+from rsk_neural_simulator.data.paths import DEFAULT_PATHS, BasePath
 
-DT = 1 / 30  # 30 FPS
+# écart de temps entre chaque envoie d'ordres, 
+# (calé sur le framerate théorique de la cam, mais il peut y avoir des drop)
+# TODO : peut être se caler sur le framerate réel ?
+DT = 1 / 30  #
 RAW_ROOT = Path("raw")
+# pour jouer la suite de path sur chaque robot.
 ROBOT_MAP = {
     "g1": "green1",
     "g2": "green2",
     "b1": "blue1",
     "b2": "blue2",
 }
+# poses ou iront se garer les robots après acquisition de données.
+# Pour pas géner les autres robots, on se décale un peu en arrière.
 PARKING_POSES = {
     "g1": (0.2, rsk_constants.field_width / 2 - 20, -math.pi / 2),
     "g2": (0.6, rsk_constants.field_width / 2 - 20, -math.pi / 2),
@@ -29,8 +35,13 @@ PARKING_POSES = {
     "b2": (-0.6, rsk_constants.field_width / 2 - 20, -math.pi / 2),
 }
 
-
 def record_paths_for_robot(client: rsk.Client, robot_key: str) -> None:
+    """Enregistre les données de trajectoire pour un robot spécifique.  
+
+    Args:
+        client (rsk.Client): @IP du client RSK (controleur réél/ simulateur)
+        robot_key (str): Clé identifiant le robot (à prendre dans robot map)
+    """
     robot_attr = ROBOT_MAP[robot_key]
     robot = getattr(client, robot_attr)
 
@@ -79,14 +90,17 @@ def record_paths_for_robot(client: rsk.Client, robot_key: str) -> None:
         with destination.open("w", encoding="utf-8") as f:
             json.dump(path_samples, f, indent=4)
 
-        print(f"Data saved to {destination}")
+        print(f"Données enregistrées dans {destination}")
 
     park_robot(robot, robot_key)
 
-
 def park_robot(robot, robot_key: str) -> None:
-    '''Returns the robot to its parking position after data acquisition.
-        (un peu en arrière pour éviter les collisions)'''
+    '''Ramène le robot à sa position de parking après l'acquisition de données.
+        (un peu en arrière pour éviter les collisions)
+    Args: 
+        robot : id du robot
+        robot_key : g1/g2/g3/g4  
+    '''
     pose = PARKING_POSES.get(robot_key)
     if pose is None:
         return
@@ -96,9 +110,15 @@ def park_robot(robot, robot_key: str) -> None:
     robot.control(0, 0, 0)
 
 
-with rsk.Client(host="192.168.100.1") as client:
-    for robot_key in ROBOT_MAP:
-        try:
-            record_paths_for_robot(client, robot_key)
-        except Exception as exc: 
-            print(f"Acquisition ignorée pour {robot_key}: {exc}")
+def main(host: str = "192.168.100.1") -> None:
+    with rsk.Client(host=host) as client:
+        # loop sur chaque robot
+        for robot_key in ROBOT_MAP:
+            try:
+                record_paths_for_robot(client, robot_key)
+            except Exception as exc:
+                print(f"Acquisition ignorée pour {robot_key}: {exc}")
+
+
+if __name__ == "__main__":
+    main()
