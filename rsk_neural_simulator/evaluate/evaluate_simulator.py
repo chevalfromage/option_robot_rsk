@@ -1,10 +1,8 @@
 """Replay un unique scénario RSK sur le simulateur et tracer XY + theta."""
 from __future__ import annotations
 
-import argparse
 import copy
 import json
-import math
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -26,6 +24,7 @@ MIN_SLEEP = 1 / 120
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 DEFAULT_RAW_ROOT = (DATA_DIR / RAW_ROOT).resolve()
+SIM_HOST = "127.0.0.1"
 
 
 def angle_wrap(angle: float) -> float:
@@ -49,12 +48,6 @@ class Pose:
         if any(value is None for value in (x, y, theta)):
             return None
         return cls(float(x), float(y), float(theta))
-
-
-def pose_error(camera: Pose, simulator: Pose) -> Tuple[float, float]:
-    pos_err = math.dist((camera.x, camera.y), (simulator.x, simulator.y))
-    theta_err = abs(angle_wrap(camera.theta - simulator.theta))
-    return pos_err, theta_err
 
 
 def first_valid_pose(samples: Sequence[dict]) -> Optional[Pose]:
@@ -152,31 +145,11 @@ def replay_scenario(
     return records, path_name
 
 
-def compute_rmse(records: Sequence[Tuple[float, Optional[Pose], Optional[Pose]]]) -> Tuple[float, float]:
-    pos_errors: List[float] = []
-    theta_errors: List[float] = []
-    for _, cam_pose, sim_pose in records:
-        if cam_pose and sim_pose:
-            pos_err, theta_err = pose_error(cam_pose, sim_pose)
-            pos_errors.append(pos_err)
-            theta_errors.append(theta_err)
-
-    if not pos_errors:
-        return float("nan"), float("nan")
-
-    def rmse(values: List[float]) -> float:
-        return math.sqrt(sum(v * v for v in values) / len(values))
-
-    return rmse(pos_errors), rmse(theta_errors)
-
-
 def plot_results(
     records: Sequence[Tuple[float, Optional[Pose], Optional[Pose]]],
     robot_key: str,
     path_name: str,
     destination: Path,
-    pos_rmse: float,
-    theta_rmse: float,
 ) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     fig, (ax_xy, ax_theta_cam, ax_theta_sim) = plt.subplots(1, 3, figsize=(15, 4.5))
@@ -213,9 +186,7 @@ def plot_results(
     ax_theta_sim.grid(True)
     ax_theta_sim.legend()
 
-    text = f"RMSE position: {pos_rmse:.3f} m\nRMSE theta: {theta_rmse:.3f} rad"
     fig.suptitle(f"{robot_key} / {path_name}")
-    fig.text(0.5, 0.02, text, ha="center")
     fig.tight_layout(rect=(0, 0.05, 1, 0.95))
     fig.savefig(destination, dpi=200)
     plt.close(fig)
@@ -246,43 +217,23 @@ def run_paths_for_robot(
             continue
 
         records, path_name = replay_scenario(samples, robot_key, scenario_path, client)
-        pos_rmse, theta_rmse = compute_rmse(records)
         destination = output_dir / robot_key / f"{path_name}.png"
-        plot_results(records, robot_key, path_name, destination, pos_rmse, theta_rmse)
+        plot_results(records, robot_key, path_name, destination)
         print(f"[OK] {robot_key}/{path_name} → {destination}")
 
     park_robot(client, robot_key)
     print(f"=== Fin robot {robot_key} ===")
 
 
-def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--host", default="127.0.0.1", help="Adresse IP du simulateur RSK")
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=RESULTS_DIR,
-        help="Dossier où écrire les plots (par défaut: evaluate/results)",
-    )
-    parser.add_argument(
-        "--raw-root",
-        type=Path,
-        default=DEFAULT_RAW_ROOT,
-        help="Dossier contenant les JSON enregistrés (par défaut: data/raw)",
-    )
-    return parser.parse_args(argv)
-
-
-def main(argv: Optional[Sequence[str]] = None) -> None:
-    args = parse_args(argv)
-    raw_root = args.raw_root.resolve()
+def main() -> None:
+    raw_root = DEFAULT_RAW_ROOT
     if not raw_root.exists():
         raise SystemExit(f"Dossier de données introuvable: {raw_root}")
 
-    output_dir = args.output.resolve()
+    output_dir = RESULTS_DIR
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    with rsk.Client(host=args.host) as client:
+    with rsk.Client(host=SIM_HOST) as client:
         park_all_robots(client)
         for robot_key in ROBOT_MAP:
             run_paths_for_robot(client, robot_key, raw_root, output_dir)
