@@ -99,7 +99,9 @@ optimizer = optim.Adam(model.parameters(), lr=10e-4)  # descente de gradient
 
 # entrainement
 
-epochs = 500
+epochs = 1000
+early_stop = 20
+val_loss_prev =0
 
 for epoch in range(epochs):
     # train
@@ -124,6 +126,15 @@ for epoch in range(epochs):
             f"train MSE = {train_loss.item():.6f} | "
             f"val MSE = {val_loss.item():.6f}"
         )
+    if(abs(val_loss_prev- val_loss.item())<=0.001):
+        counter_loss_stop+=1
+    else:
+        counter_loss_stop=0
+    if(counter_loss_stop>=early_stop):
+        print("early stop")
+        break
+    val_loss_prev = val_loss.item()
+
 
 
 model.eval()

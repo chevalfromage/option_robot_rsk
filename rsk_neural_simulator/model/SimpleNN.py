@@ -13,7 +13,9 @@ class SimpleNN(nn.Module):
             nn.ReLU(),
             nn.Linear(128, 128), 
             nn.ReLU(),
-            nn.Linear(128, 3)  # couche de sortie
+            nn.Linear(128, 64), 
+            nn.ReLU(),
+            nn.Linear(64, 3)  # couche de sortie
         )
 
     def forward(self, x):

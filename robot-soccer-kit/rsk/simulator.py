@@ -17,6 +17,7 @@ import torch
 from rsk_neural_simulator.model.SimpleNN import SimpleNN
 
 import joblib
+import warnings
 
 
 class SimulatedObject:
@@ -112,6 +113,8 @@ class SimulatedRobot(SimulatedObject):
         self.x_scaler = joblib.load("rsk_neural_simulator/model/trained_model/x_scaler.pkl")
         self.y_scaler = joblib.load("rsk_neural_simulator/model/trained_model/y_scaler.pkl")
 
+        warnings.filterwarnings("ignore", category=UserWarning)
+
     def compute_kick(self, power: float) -> None:
         # Robot to ball vector, expressed in world
         ball_world = self.sim.objects["ball"].position[:2]
@@ -154,6 +157,8 @@ class SimulatedRobot(SimulatedObject):
             constants.max_angular_acceleration * dt,
         )
 
+        print(f"order : {self.control_cmd} , self.velocity : {self.velocity}")
+
     def update_velocity(self, dt: float) -> None: #updating velovity via MLP
         target_velocity_robot = self.control_cmd # entrée 1 du MLP (vecteur direction à suivre) // bon car changement de la fonction control 
         velocity_robot  = self.velocity # entrée 2 du MLP (vecteur vitesse actuel)
@@ -172,16 +177,15 @@ class SimulatedRobot(SimulatedObject):
         y_scaled = y_scaled.cpu().numpy()
         prediction_velocity_robot = self.y_scaler.inverse_transform(y_scaled)[0]
 
-        print(prediction_velocity_robot)
-
         #fin du MLP
 
         T_world_robot = utils.frame(tuple(self.position))
         target_velocity_world = T_world_robot[:2, :2] @ prediction_velocity_robot[:2]
 
         self.velocity[:2] = target_velocity_world
+        self.velocity[2:] = prediction_velocity_robot[2:]
 
-        # print(f" velocity : {self.velocity}")
+        # print(f" marker : {self.marker} order : {self.control_cmd} , self.velocity : {self.velocity}")
 
 
     def control_leds(self, r: int, g: int, b: int) -> None:
