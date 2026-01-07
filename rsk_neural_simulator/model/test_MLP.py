@@ -1,7 +1,7 @@
 import numpy as np
 
 import torch
-from SimpleNN import SimpleNN
+from .SimpleNN import SimpleNN
 
 import joblib
 

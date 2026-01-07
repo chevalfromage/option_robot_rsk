@@ -9,10 +9,11 @@ from sklearn.preprocessing import StandardScaler
 import os
 import glob
 import joblib
-from SimpleNN import SimpleNN
+from .SimpleNN import SimpleNN
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 base_path = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "data", "clean"))
+TRAINED_MODEL_DIR = os.path.join(SCRIPT_DIR, "trained_model")
 
 all_dfs = []
 
@@ -26,11 +27,6 @@ for json_path in glob.glob(json_pattern, recursive=True):
 
     all_dfs.append(df_tmp)
 
-if not all_dfs:
-    raise FileNotFoundError(
-        f"Aucun fichier JSON trouvé via le motif {json_pattern}.\n"
-        "Vérifie que les données nettoyées sont présentes et que tu exécutes le script dans l'environnement attendu."
-    )
 
 df = pd.concat(all_dfs, ignore_index=True)
 
@@ -91,31 +87,30 @@ Y_test_t = torch.tensor(Y_test_scaled, dtype=torch.float32)
 
 model = SimpleNN()
 
-# 3. Définir une fonction de perte et un optimiseur
-criterion = nn.MSELoss() #tests de loss
-# criterion = nn.L1Loss()  # erreur quadratique moyenne
+
+criterion = nn.MSELoss() # fonction de loss
 optimizer = optim.Adam(model.parameters(), lr=10e-4)  # descente de gradient
 
 # print(targets)
 
 # entrainement
 
-epochs = 650
+epochs = 1500
 early_stop = 20
 val_loss_prev =0
 
 for epoch in range(epochs):
-    # train
+    
     model.train()
-    optimizer.zero_grad()
+    optimizer.zero_grad() 
 
-    preds = model(X_train_t)
-    train_loss = criterion(preds, Y_train_t)
+    preds = model(X_train_t) 
+    train_loss = criterion(preds, Y_train_t)  #calcul de la loss à cette epoch
 
-    train_loss.backward()
+    train_loss.backward() #backpropagation
     optimizer.step()
 
-    # validation
+    
     model.eval()
     with torch.no_grad():
         val_preds = model(X_val_t)
@@ -123,16 +118,18 @@ for epoch in range(epochs):
 
     if epoch % 50 == 0:
         print(
-            f"Epoch {epoch:4d} | "
-            f"train MSE = {train_loss.item():.6f} | "
+            f"Epoch {epoch:4d} , "
+            f"train MSE = {train_loss.item():.6f} , "
             f"val MSE = {val_loss.item():.6f}"
         )
+        
+    # test l'early stopping
     if(abs(val_loss_prev- val_loss.item())<=0.00001):
         counter_loss_stop+=1
     else:
         counter_loss_stop=0
     if(counter_loss_stop>=early_stop):
-        print("early stop")
+        print("early stopped at epoch :",epoch)
         break
     val_loss_prev = val_loss.item()
 
@@ -151,41 +148,10 @@ with torch.no_grad():
 
 print("Train (eval) MSE :", train_loss_eval.item())
 
-print("Sauvegarde du modèle ...")
-os.makedirs("trained_model", exist_ok=True)
-torch.save(model.state_dict(), "trained_model/simple_nn.pth")
-joblib.dump(x_scaler, "trained_model/x_scaler.pkl")
-joblib.dump(y_scaler, "trained_model/y_scaler.pkl")
+
+os.makedirs(TRAINED_MODEL_DIR, exist_ok=True)
+torch.save(model.state_dict(), os.path.join(TRAINED_MODEL_DIR, "simple_nn.pth"))
+joblib.dump(x_scaler, os.path.join(TRAINED_MODEL_DIR, "x_scaler.pkl"))
+joblib.dump(y_scaler, os.path.join(TRAINED_MODEL_DIR, "y_scaler.pkl"))
 print("Modèle sauvegardé")
 
-# function to research of the best learning rate
-#import matplotlib.pyplot as plt
-#lrs = []
-#losses = []
-#for i in range(100):
-#    lr = 1e-7 * (10 ** (i / 20))  # de 1e-7 à environ 1
-#    lrs.append(lr)
-#
-#    optimizer = optim.Adam(model.parameters(), lr=lr)
-#
-#    model.train()
-#    optimizer.zero_grad()
-#
-#    preds = model(X_train_t)
-#    loss = criterion(preds, Y_train_t)
-#
-#    loss.backward()
-#    optimizer.step()
-#
-#    losses.append(loss.item())
-#    
-#plt.plot(lrs, losses)
-#plt.xscale('log')
-#plt.xlabel("Learning Rate")
-#plt.ylabel("Training Loss")
-#plt.title("Learning Rate Finder")
-#plt.grid(True)
-#plt.show()
-#plt.savefig("learning_rate_finder.png")
-#
-#print(f"Figure saved to learning_rate_finder.png")
