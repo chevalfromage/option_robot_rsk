@@ -12,7 +12,7 @@ import joblib
 from SimpleNN import SimpleNN
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-base_path = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "data", "clean", "irl"))
+base_path = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "data", "clean"))
 
 all_dfs = []
 
@@ -92,14 +92,15 @@ Y_test_t = torch.tensor(Y_test_scaled, dtype=torch.float32)
 model = SimpleNN()
 
 # 3. Définir une fonction de perte et un optimiseur
-criterion = nn.L1Loss()  # erreur quadratique moyenne
+criterion = nn.MSELoss() #tests de loss
+# criterion = nn.L1Loss()  # erreur quadratique moyenne
 optimizer = optim.Adam(model.parameters(), lr=10e-4)  # descente de gradient
 
 # print(targets)
 
 # entrainement
 
-epochs = 1000
+epochs = 650
 early_stop = 20
 val_loss_prev =0
 
@@ -126,7 +127,7 @@ for epoch in range(epochs):
             f"train MSE = {train_loss.item():.6f} | "
             f"val MSE = {val_loss.item():.6f}"
         )
-    if(abs(val_loss_prev- val_loss.item())<=0.001):
+    if(abs(val_loss_prev- val_loss.item())<=0.00001):
         counter_loss_stop+=1
     else:
         counter_loss_stop=0
