@@ -19,10 +19,12 @@ MAX_Y = rsk_constants.field_width / 2
 
 Pose = Tuple[float, float, float]
 
-
-def _angle_wrap(value: float) -> float:
+# TODO : eviter ca et faire plutot avec une erreur (visio marc 7/01)
+def wrap_angle(value: float) -> float:
     """Calcule l'angle en wrappant entre -pi et pi évite les ovf"""
     return (value + np.pi) % (2 * np.pi) - np.pi
+
+
 
 class BasePath:
     """Interface commune pour toutes les trajectoires."""
@@ -32,6 +34,7 @@ class BasePath:
     
     # pour que ce soit une interface complete il faut 
     # définir les autres fonctions des classes qui l'implémente. 
+    # elles seront implémentées dans les classes filles de cette interface.
     def reset(self) -> None:
         raise NotImplementedError
 
@@ -83,7 +86,7 @@ class WaypointPath(BasePath):
         pose_arr = np.array(current_pose)
         target_arr = np.array(self.waypoints[self._index])
         pos_error = np.linalg.norm(pose_arr[:2] - target_arr[:2])
-        theta_error = abs(_angle_wrap(pose_arr[2] - target_arr[2]))
+        theta_error = abs(wrap_angle(pose_arr[2] - target_arr[2]))
 
         if pos_error <= self.tolerance and theta_error <= self.theta_tolerance:
             if self._index == len(self.waypoints) - 1:
@@ -93,11 +96,8 @@ class WaypointPath(BasePath):
         return self._finished
 
 class PausingWaypointPath(WaypointPath):
-    """WaypointPath avec pause fixe entre chaque point.
-
-    Le robot suit les waypoints comme d'habitude, mais une fois un point
-    atteint, le path reste "terminé" pour ce point pendant `pause_duration`
-    secondes avant de passer à la cible suivante.
+    """
+    Pareil que + haut mais avec des pauses à chaque waypoint.
     """
 
     def __init__(
@@ -135,7 +135,7 @@ class PausingWaypointPath(WaypointPath):
         pose_arr = np.array(current_pose)
         target_arr = np.array(self.waypoints[self._index])
         pos_error = np.linalg.norm(pose_arr[:2] - target_arr[:2])
-        theta_error = abs(_angle_wrap(pose_arr[2] - target_arr[2]))
+        theta_error = abs(wrap_angle(pose_arr[2] - target_arr[2]))
 
         if pos_error <= self.tolerance and theta_error <= self.theta_tolerance:
             # on démarre une pause à ce waypoint
@@ -144,11 +144,12 @@ class PausingWaypointPath(WaypointPath):
 
         return self._finished
 
+"""
 class ParametricPath(BasePath):
-    """
+
     classe qui définit les traj par une fonction paramétrée
     
-    """
+
     def __init__(
         self,
         name: str,
@@ -176,8 +177,9 @@ class ParametricPath(BasePath):
         if self.duration is None:
             return False
         return self._elapsed() >= self.duration
+"""
 
-def _circle_pose(center: Tuple[float, float], radius: float, angular_speed: float, elapsed: float) -> Pose:
+""" def _circle_pose(center: Tuple[float, float], radius: float, angular_speed: float, elapsed: float) -> Pose:
     angle = angular_speed * elapsed
     x = center[0] + radius * np.cos(angle)
     y = center[1] + radius * np.sin(angle)
@@ -195,7 +197,7 @@ def _lemniscate_pose(a: float, angular_speed: float, elapsed: float) -> Pose:
     x = scale * cos_t
     y = scale * sin_t * cos_t
     orientation = np.arctan2(y, x)
-    return (x, y, orientation)
+    return (x, y, orientation) """
 
 # carré en changeant l'angle à chaque waypoint
 path1 = WaypointPath(
@@ -247,22 +249,23 @@ path4 = WaypointPath(
     ],
 )
 
-# cercle en regardant à l'intérieur de la rotation
+""" # cercle en regardant à l'intérieur de la rotation
 path5 = ParametricPath(
     "circle_in",
     pose_fn=lambda elapsed: _circle_pose((0.0, 0.0), MAX_Y, 0.5, elapsed),
     duration=20.0,
-)
+) """
 
-# infini en regardant à l'exté des rotations
+""" # infini en regardant à l'exté des rotations
 path6 = ParametricPath(
     "lemniscate_out",
     pose_fn=lambda elapsed: _lemniscate_pose(MAX_Y, 0.6, elapsed),
     duration=20.0,
 )
-
-# Waypoints aléatoires reproductibles (générés une fois grâce à la seed)
-N_RANDOM_WAYPOINTS = 10
+ """
+ 
+# Waypoints aléatoires
+N_RANDOM_WAYPOINTS = 25
 RANDOM_WAYPOINTS = [
     (random.uniform(-MAX_X, MAX_X), random.uniform(-MAX_Y, MAX_Y), random.uniform(-np.pi, np.pi)) for _ in range(N_RANDOM_WAYPOINTS)
 ]
@@ -270,16 +273,18 @@ RANDOM_WAYPOINTS = [
 path7 = PausingWaypointPath(
     "random_waypoints",
     RANDOM_WAYPOINTS,
-    pause_duration=5.0,
+    pause_duration=4.0,
 )
 
-DEFAULT_PATHS: List[BasePath] = [path1, 
-                                 path2, 
-                                 path3, 
-                                 path4, 
+DEFAULT_PATHS: List[BasePath] = [
+                                 #path1, 
+                                 #path2, 
+                                 #path3, 
+                                 #path4, 
                                  #path5, 
                                  #path6, 
-                                 path7]
+                                 path7
+                                 ]
 
 
 

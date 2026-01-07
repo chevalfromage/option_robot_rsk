@@ -45,22 +45,22 @@ def record_paths_for_robot(client: rsk.Client, robot_key: str) -> None:
     robot_attr = ROBOT_MAP[robot_key]
     robot = getattr(client, robot_attr)
 
-    print(f"Acquisition pour {robot_key} ")
+    print(f"Acquisition de données pour {robot_key} ")
     run_start = time.monotonic()
 
+    # loop sur chaque path défini dans paths.py
     for path_id, path in enumerate(DEFAULT_PATHS):
-        if not isinstance(path, BasePath):
-            continue
 
         path.reset()
         initial_pose = path.initial_pose()
-        if initial_pose is not None:
-            robot.goto(initial_pose)
-            time.sleep(2)
+       
+        robot.goto(initial_pose)
+        time.sleep(2)
 
         path_samples = []
 
         while True:
+            # ici reprise du code d'origine de marc pour controler le robot 
             target_pose = path.current_target()
             _, orders = robot.goto_compute_order(target_pose)
             robot.control(*orders)
@@ -68,6 +68,7 @@ def record_paths_for_robot(client: rsk.Client, robot_key: str) -> None:
             pose = robot.pose if robot.pose is not None else (None, None, None)
             ball = client.ball if client.ball is not None else (None, None)
 
+            #recup toutes les infos brutes pour ce dt
             path_samples.append(
                 {
                     "timestamp": time.monotonic() - run_start,
@@ -84,17 +85,19 @@ def record_paths_for_robot(client: rsk.Client, robot_key: str) -> None:
 
             if finished:
                 break
-
+        
+        #construction du chemin ou stocker la data
         destination = RAW_ROOT / robot_key / f"{path.name}.json"
         destination.parent.mkdir(parents=True, exist_ok=True)
         with destination.open("w", encoding="utf-8") as f:
             json.dump(path_samples, f, indent=4)
 
-        print(f"Données enregistrées dans {destination}")
+        print(f"Data enregistrée dans {destination}")
 
+    #retour parking
     park_robot(robot, robot_key)
 
-def park_robot(robot, robot_key: str) -> None:
+def park_robot(robot, robot_key: str):
     '''Ramène le robot à sa position de parking après l'acquisition de données.
         (un peu en arrière pour éviter les collisions)
     Args: 
@@ -102,15 +105,13 @@ def park_robot(robot, robot_key: str) -> None:
         robot_key : g1/g2/g3/g4  
     '''
     pose = PARKING_POSES.get(robot_key)
-    if pose is None:
-        return
 
     print(f"Retour parking pour {robot_key}")
     robot.goto(pose)
     robot.control(0, 0, 0)
 
 
-def main(host: str = "192.168.100.1") -> None:
+def main(host: str = "192.168.100.1"):
     with rsk.Client(host=host) as client:
         # loop sur chaque robot
         for robot_key in ROBOT_MAP:

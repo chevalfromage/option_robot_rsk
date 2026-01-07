@@ -12,7 +12,7 @@ from pathlib import Path
 import rsk
 from rsk import constants as rsk_constants
 
-from paths import DEFAULT_PATHS, BasePath
+from .paths import DEFAULT_PATHS, BasePath
 
 DT = 1 / 30  # 30 FPS
 RAW_ROOT = Path("raw")
