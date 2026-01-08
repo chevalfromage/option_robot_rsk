@@ -9,6 +9,8 @@ from sklearn.preprocessing import StandardScaler
 import os
 import glob
 import joblib
+import matplotlib.pyplot as plt
+from typing import List
 from .SimpleNN import SimpleNN
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -99,6 +101,15 @@ epochs = 1500
 early_stop = 20
 val_loss_prev =0
 
+# historique des loss pour les plotter 
+train_loss_history: List[float] = []
+val_loss_history: List[float] = []
+
+# historique des loss par composantes pour identifier si c'est theta qui marche pas
+output_labels = ["x", "y", "theta"]
+train_output_history = [[] for _ in output_labels]
+val_output_history = [[] for _ in output_labels]
+
 for epoch in range(epochs):
     
     model.train()
@@ -116,6 +127,22 @@ for epoch in range(epochs):
         val_preds = model(X_val_t)
         val_loss = criterion(val_preds, Y_val_t)
 
+    # stocker les MSE loss totales
+    train_loss_history.append(train_loss.item())
+    val_loss_history.append(val_loss.item())
+    
+    # calcul à la main des MSE par composantes
+    train_output = torch.mean((preds - Y_train_t) ** 2, dim=0).tolist() 
+    #==> [train_MSE_x, train_MSE_y, train_MSE_theta]
+    val_output = torch.mean((val_preds - Y_val_t) ** 2, dim=0).tolist() 
+    #==> [val_MSE_x, val_MSE_y, val_MSE_theta]
+    
+    # puis on les stock pour les plotter plus tard 
+    for idx in range(len(output_labels)):
+        train_output_history[idx].append(train_output[idx])
+        val_output_history[idx].append(val_output[idx])
+        
+        
     if epoch % 50 == 0:
         print(
             f"Epoch {epoch:4d} , "
@@ -150,6 +177,35 @@ print("Train (eval) MSE :", train_loss_eval.item())
 
 
 os.makedirs(TRAINED_MODEL_DIR, exist_ok=True)
+
+# plot des loss totales
+epochs_idx = range(1, len(train_loss_history) + 1)
+plt.figure()
+plt.plot(epochs_idx, train_loss_history, label="Train MSE")
+plt.plot(epochs_idx, val_loss_history, label="Validation MSE")
+plt.xlabel("Epoch")
+plt.ylabel("MSE loss")
+plt.xscale("log")
+plt.title("Training & Validation Loss")
+plt.legend()
+plt.grid(True, linestyle=":", alpha=0.5)
+plt.show()
+
+#plot des loss par composantes
+plt.figure()
+for idx, label in enumerate(output_labels):
+    plt.plot(epochs_idx, train_output_history[idx], label=f"train {label}")
+    plt.plot(epochs_idx, val_output_history[idx], linestyle="--", label=f"val {label}")
+plt.xlabel("Epoch")
+plt.ylabel("MSE")
+plt.xscale("log")
+plt.title("Loss par composante de l'output")
+plt.legend()
+plt.grid(True, linestyle=":", alpha=0.5)
+plt.show()
+
+
+
 torch.save(model.state_dict(), os.path.join(TRAINED_MODEL_DIR, "simple_nn.pth"))
 joblib.dump(x_scaler, os.path.join(TRAINED_MODEL_DIR, "x_scaler.pkl"))
 joblib.dump(y_scaler, os.path.join(TRAINED_MODEL_DIR, "y_scaler.pkl"))
