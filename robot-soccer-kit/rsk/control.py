@@ -151,6 +151,33 @@ class Control:
                         else:
                             response[0] = 2
                             response[1] = "Only master can set the LEDs"
+                    elif command[0] == "target" and len(command) == 4:
+                        if self.robots.state is not None:
+                            self.robots.state.set_target(
+                                marker,
+                                {
+                                    "position": [
+                                        float_in_range(
+                                            command[1],
+                                            -constants.carpet_length,
+                                            constants.carpet_length,
+                                        ),
+                                        float_in_range(
+                                            command[2],
+                                            -constants.carpet_width,
+                                            constants.carpet_width,
+                                        ),
+                                    ],
+                                    "orientation": float_in_range(
+                                        command[3], -np.pi, np.pi
+                                    ),
+                                },
+                            )
+                        response = [True, "ok"]
+                    elif command[0] == "target_clear":
+                        if self.robots.state is not None:
+                            self.robots.state.set_target(marker, None)
+                        response = [True, "ok"]
                     else:
                         response[0] = 2
                         response[1] = "Unknown command"

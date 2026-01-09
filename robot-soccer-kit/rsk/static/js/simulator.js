@@ -77,6 +77,41 @@ function simulator_initialize(backend, isView) {
             context.stroke()
         }
 
+        function drawArrow(begin, end, canvas, color) {
+            const ctx = canvas.getContext('2d')
+            ctx.beginPath()
+            ctx.strokeStyle = color
+            ctx.lineWidth = 4
+            ctx.moveTo(begin[0], begin[1])
+            ctx.lineTo(end[0], end[1])
+            ctx.stroke()
+
+            const angle = Math.atan2(end[1] - begin[1], end[0] - begin[0])
+            const head = 10
+            ctx.beginPath()
+            ctx.fillStyle = color
+            ctx.moveTo(end[0], end[1])
+            ctx.lineTo(
+                end[0] - head * Math.cos(angle - Math.PI / 6),
+                end[1] - head * Math.sin(angle - Math.PI / 6)
+            )
+            ctx.lineTo(
+                end[0] - head * Math.cos(angle + Math.PI / 6),
+                end[1] - head * Math.sin(angle + Math.PI / 6)
+            )
+            ctx.closePath()
+            ctx.fill()
+        }
+
+        function markerColor(marker) {
+            if (marker.startsWith("green")) {
+                return "rgba(0, 200, 0, 0.9)"
+            } else if (marker.startsWith("blue")) {
+                return "rgba(0, 160, 255, 0.9)"
+            }
+            return "rgba(255, 255, 255, 0.9)"
+        }
+
         function drawBall(position) {
             ball = transformViewToSim(position)
             ballCanvas = document.getElementById("ball")
@@ -138,6 +173,35 @@ function simulator_initialize(backend, isView) {
                     context.drawImage(markers[entry]["image"], -robotSize / 2, -robotSize / 2, robotSize, robotSize)
                     markers[entry]["pos"] = robotPos
                     markers[entry]["clear"] = false
+
+                    if (
+                        state.orders
+                        && state.orders[entry]
+                        && display_settings["orders_vector"]
+                        && display_settings["orders_vector"]["value"]
+                    ) {
+                        const order = state.orders[entry]
+                        if (order.length >= 2) {
+                            const orientation = robot.orientation
+                            const cos = Math.cos(orientation)
+                            const sin = Math.sin(orientation)
+                            const worldDx = cos * order[0] - sin * order[1]
+                            const worldDy = sin * order[0] + cos * order[1]
+                            const magnitude = Math.hypot(worldDx, worldDy)
+                            if (magnitude > 1e-3) {
+                                const start = [robotPos[0], robotPos[1]]
+                                const pxVector = [worldDx * ratio_w, -worldDy * ratio_h]
+                                const pixMagnitude = Math.hypot(pxVector[0], pxVector[1]) || 1
+                                const length = constants["robot_radius"] * ratio_w * 1.5 * Math.min(1.2, magnitude)
+                                const scale = length / pixMagnitude
+                                const end = [
+                                    start[0] + pxVector[0] * scale,
+                                    start[1] + pxVector[1] * scale
+                                ]
+                                drawArrow(start, end, canvas.offscreenCanvas, "#ff3333")
+                            }
+                        }
+                    }
                 }
 
                 canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height)
@@ -149,6 +213,32 @@ function simulator_initialize(backend, isView) {
 
                 if (state.ball != null) {
                     drawBall(state.ball)
+                }
+
+                if (
+                    state.targets
+                    && display_settings["goto_targets"]
+                    && display_settings["goto_targets"]["value"]
+                ) {
+                    for (const marker in state.targets) {
+                        const target = state.targets[marker]
+                        if (!target || !target.position) {
+                            continue
+                        }
+                        const orientation = (typeof target.orientation === "number") ? target.orientation : 0
+                        const targetView = transformViewToSim(
+                            target.position,
+                            orientation
+                        )
+                        drawCircle(
+                            [targetView[0], targetView[1]],
+                            constants["robot_radius"] * ratio_w * 0.35,
+                            "#ff4d4d",
+                            ballCanvas,
+                            false,
+                            2
+                        )
+                    }
                 }
 
                 let placementCirclePosition = state["referee"]["wait_ball_position"]
@@ -269,6 +359,8 @@ function simulator_initialize(backend, isView) {
         display_settings = {
             "landmark": { "label": "Center Landmark", "default": true, "type": "" },
             "timed_circle": { "label": "Timed Circle", "default": false, "type": "" },
+            "goto_targets": { "label": "Goto Targets", "default": true, "type": "" },
+            "orders_vector": { "label": "Goto Orders", "default": true, "type": "" },
         }
         for (setting_name in display_settings) {
             display_settings[setting_name]["value"] = display_settings[setting_name]["default"]

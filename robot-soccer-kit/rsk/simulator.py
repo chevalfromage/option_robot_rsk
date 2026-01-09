@@ -6,18 +6,32 @@ from math import dist
 from . import kinematics, utils, constants, state, robot, robots, client
 
 from collections.abc import Callable
+from pathlib import Path
 
 import sys
 import os
 
-# PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
-# sys.path.append(PROJECT_ROOT)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    # Ensure sibling packages (e.g., rsk_neural_simulator) are importable
+    sys.path.append(str(PROJECT_ROOT))
+
+TRAINED_MODEL_DIR = PROJECT_ROOT / "rsk_neural_simulator" / "model" / "trained_model"
+MODEL_PATH = TRAINED_MODEL_DIR / "best_nn_1.pth"
+X_SCALER_PATH = TRAINED_MODEL_DIR / "x_scaler.pkl"
+Y_SCALER_PATH = TRAINED_MODEL_DIR / "y_scaler.pkl"
 
 import torch
-from rsk_neural_simulator.model.SimpleNN import SimpleNN
+from rsk_neural_simulator.saved_models.SimpleNN import SimpleNN
 
 import joblib
 import warnings
+
+
+# Constantes pour savoir quels robots faire spawn et ou 
+SIMULATION_CONFIGURATION = "side"
+# Only robots explicitly listed here will spawn (team -> set of numbers)
+SIMULATION_MARKERS = {"green": {1}}
 
 
 class SimulatedObject:
@@ -107,11 +121,22 @@ class SimulatedRobot(SimulatedObject):
         self.control_cmd: np.ndarray = np.array([0.0, 0.0, 0.0])
         self.leds = None  # [R,G,B] (0-255) None for off
 
+        missing_artifacts = [
+            path for path in (MODEL_PATH, X_SCALER_PATH, Y_SCALER_PATH) if not path.exists()
+        ]
+        if missing_artifacts:
+            missing_str = ", ".join(str(p) for p in missing_artifacts)
+            raise FileNotFoundError(
+                "Missing neural simulator artifacts: "
+                f"{missing_str}. Run `python -m rsk_neural_simulator.model.basicMLP` "
+                "from the project root to generate them."
+            )
+
         self.model = SimpleNN()
-        self.model.load_state_dict(torch.load("rsk_neural_simulator/model/trained_model/simple_nn.pth"))
+        self.model.load_state_dict(torch.load(MODEL_PATH))
         self.model.eval()
-        self.x_scaler = joblib.load("rsk_neural_simulator/model/trained_model/x_scaler.pkl")
-        self.y_scaler = joblib.load("rsk_neural_simulator/model/trained_model/y_scaler.pkl")
+        self.x_scaler = joblib.load(X_SCALER_PATH)
+        self.y_scaler = joblib.load(Y_SCALER_PATH)
 
         warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -244,7 +269,19 @@ class Simulator:
         self.robots: robots.Robots = robots
 
         # Creating the robots
-        for configuration in client.configurations["game_green_positive"]:
+        config_name = SIMULATION_CONFIGURATION
+        if config_name not in client.configurations:
+            raise KeyError(
+                f"Unknown simulation configuration '{config_name}'. "
+                f"Available presets: {', '.join(client.configurations.keys())}"
+            )
+
+        for configuration in client.configurations[config_name]:
+            team, number = configuration[:2]
+            if SIMULATION_MARKERS:
+                allowed = SIMULATION_MARKERS.get(team)
+                if allowed is None or number not in allowed:
+                    continue
             robot: RobotSim = self.robots.add_robot(
                 f"sim://{utils.robot_list2str(*configuration[:2])}"
             )
@@ -360,7 +397,13 @@ class Simulator:
                 if marker == "ball":
                     self.state.set_ball(pos[:2].tolist())
                     self.state.set_velocity("ball", vel[:2].tolist(), vel[2])
+                    self.state.set_order("ball", None)
                 else:
                     self.state.set_marker(marker, pos[:2].tolist(), pos[2])
                     self.state.set_velocity(marker, vel[:2].tolist(), vel[2])
                     self.state.set_leds(marker, self.objects[marker].leds)
+                    control_cmd = getattr(self.objects[marker], "control_cmd", None)
+                    if control_cmd is not None:
+                        self.state.set_order(marker, control_cmd.tolist())
+                    else:
+                        self.state.set_order(marker, None)

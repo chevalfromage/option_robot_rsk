@@ -6,7 +6,8 @@ que ce soit un waypointPath (lignes droites), ou un parametricPath
 
 import time
 import random
-from typing import Callable, List, Optional, Sequence, Tuple
+from itertools import product
+from typing import Callable, List, Optional, Sequence, Tuple, Union
 from rsk import constants as rsk_constants
 import numpy as np
 
@@ -23,6 +24,23 @@ Pose = Tuple[float, float, float]
 def wrap_angle(value: float) -> float:
     """Calcule l'angle en wrappant entre -pi et pi évite les ovf"""
     return (value + np.pi) % (2 * np.pi) - np.pi
+
+
+def build_grid_waypoints(
+    x_step: float,
+    y_step: float,
+    theta_step: float,
+    include_max: bool = True,
+) -> List[Pose]:
+    """Construit toutes les combinaisons (x, y, theta) de la grille et les mélange."""
+    max_offset = x_step * 0.5 if include_max else 0.0
+    xs = np.arange(-MAX_X, MAX_X + max_offset, x_step)
+    ys = np.arange(-MAX_Y, MAX_Y + max_offset, y_step)
+    thetas = np.arange(-np.pi, np.pi + (theta_step * 0.5 if include_max else 0.0), theta_step)
+
+    waypoints = [(x, y, wrap_angle(theta)) for x, y, theta in product(xs, ys, thetas)]
+    random.shuffle(waypoints)
+    return waypoints
 
 
 
@@ -106,11 +124,12 @@ class PausingWaypointPath(WaypointPath):
         waypoints: Sequence[Pose],
         tolerance: float = 0.08,
         theta_tolerance: Optional[float] = None,
-        pause_duration: float = 3.0,
+        pause_duration: Union[float, Tuple[float, float]] = 3.0,
     ) -> None:
         super().__init__(name, waypoints, tolerance=tolerance, theta_tolerance=theta_tolerance)
         self.pause_duration = pause_duration
         self._pause_until: Optional[float] = None
+        self._current_pause = float(pause_duration) if isinstance(pause_duration, (int, float)) else None
 
     def reset(self) -> None:
         super().reset()
@@ -139,10 +158,17 @@ class PausingWaypointPath(WaypointPath):
 
         if pos_error <= self.tolerance and theta_error <= self.theta_tolerance:
             # on démarre une pause à ce waypoint
-            self._pause_until = time.monotonic() + self.pause_duration
+            self._pause_until = time.monotonic() + self._next_pause_duration()
             self._finished = False
 
         return self._finished
+
+    def _next_pause_duration(self) -> float:
+        """Retourne la durée de pause à appliquer (fixe ou aléatoire)."""
+        if isinstance(self.pause_duration, tuple):
+            low, high = self.pause_duration
+            return random.uniform(low, high)
+        return float(self.pause_duration)
 
 """
 class ParametricPath(BasePath):
@@ -273,17 +299,22 @@ RANDOM_WAYPOINTS = [
 path7 = PausingWaypointPath(
     "random_waypoints",
     RANDOM_WAYPOINTS,
-    pause_duration=4.0,
+    pause_duration=(3.0, 4.0),
 )
 
+
+# grille de points couvrant toutes les combinaisons possibles
+GRID_WAYPOINTS = build_grid_waypoints(0.40, 0.40, np.pi / 8)
+
+grid_path = PausingWaypointPath(
+    "grid_cover",
+    GRID_WAYPOINTS,
+    pause_duration=(0, 3),
+)
+
+
 DEFAULT_PATHS: List[BasePath] = [
-                                 #path1, 
-                                 #path2, 
-                                 #path3, 
-                                 #path4, 
-                                 #path5, 
-                                 #path6, 
-                                 path7
+                                 grid_path
                                  ]
 
 

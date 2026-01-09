@@ -15,6 +15,8 @@ class State:
         self.last_updates: dict = {}
         self.referee: dict = {}
         self.simulated = simulated
+        self.targets: dict = {}
+        self.orders: dict = {}
 
         self.context = None
         self.last_time = None
@@ -28,6 +30,8 @@ class State:
             "ball": self.ball,
             "referee": self.referee,
             "leds": self.leds,
+            "targets": self.targets,
+            "orders": self.orders,
             "simulated": self.simulated,
         }
 
@@ -92,3 +96,17 @@ class State:
     @_refresh
     def set_referee(self, referee):
         self.referee = referee
+
+    @_refresh
+    def set_target(self, marker: str, target: dict | None):
+        if target is None:
+            self.targets.pop(marker, None)
+        else:
+            self.targets[marker] = target
+
+    @_refresh
+    def set_order(self, marker: str, order: list[float] | None):
+        if order is None:
+            self.orders.pop(marker, None)
+        else:
+            self.orders[marker] = order

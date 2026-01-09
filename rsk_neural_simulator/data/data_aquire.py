@@ -21,9 +21,9 @@ DT = 1 / 30  #
 RAW_ROOT = Path("raw")
 # pour jouer la suite de path sur chaque robot.
 ROBOT_MAP = {
-    "g1": "green1",
+    #"g1": "green1",
     "g2": "green2",
-    "b1": "blue1",
+    #"b1": "blue1",
     "b2": "blue2",
 }
 # poses ou iront se garer les robots après acquisition de données.

@@ -454,3 +454,4 @@ class Client:
                     pass
 
         self.stop_motion()
+        
