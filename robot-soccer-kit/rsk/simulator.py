@@ -40,7 +40,7 @@ SIMULATION_CONFIGURATION = "side"
 SIMULATION_MARKERS = {}
 
 
-ROBOT_VELOCITY_MODEL = "memory"  # "original", "mlp" ou "trig"
+ROBOT_VELOCITY_MODEL = "history"  # "original", "mlp", "history" ou "trig"
 
 class SimulatedObject:
     def __init__(
@@ -233,6 +233,7 @@ class SimulatedRobot(SimulatedObject):
     # discontinuités sur theta
     def _update_velocity_MLP_trig(self, dt: float) -> None:
         if dt <= 0:
+            # Fallback to legacy behaviour if the simulator ever passes dt<=0
             self._update_velocity_original(max(dt, 0.0))
             return
 
@@ -304,8 +305,7 @@ class SimulatedRobot(SimulatedObject):
         theta = float(self.position[2])
         cos_theta = float(np.cos(theta))
         sin_theta = float(np.sin(theta))
-        
-        
+         
         history_flat = np.concatenate(list(self.velocity_history))
 
         nn_input = np.array(
@@ -357,12 +357,12 @@ class SimulatedRobot(SimulatedObject):
         """Point d'enrtrée unique pour la MAJ des vitesses, selon le modèle choisi."""
         if ROBOT_VELOCITY_MODEL == "trig":
             self._update_velocity_MLP_trig(dt)
+        elif ROBOT_VELOCITY_MODEL == "history":
+            self._update_velocity_MLP_history(dt)
         elif ROBOT_VELOCITY_MODEL == "mlp":
             self._update_velocity_mlp(dt)
         elif ROBOT_VELOCITY_MODEL == "original":
             self._update_velocity_original(dt)
-        elif ROBOT_VELOCITY_MODEL == "memory":
-            self._update_velocity_MLP_history(dt)
         else:
             raise ValueError(f"Modèle inconnu: {ROBOT_VELOCITY_MODEL}")
 
@@ -399,7 +399,7 @@ class RobotSim(robot.Robot):
     def _control_mlp(self, dx: float, dy: float, dturn: float) -> None:
         self.object.control_cmd = np.array([dx, dy, dturn])
 
-    def _control_trig(self, dx: float, dy: float, dturn: float) -> None:
+    def _control_nn(self, dx: float, dy: float, dturn: float) -> None:
         """Prépare les commandes pour le NN afin de matcher le dataset d'entraînement."""
         order_world = np.array([dx, dy], dtype=float)
         T_world_robot = utils.frame(tuple(self.object.position))
@@ -412,13 +412,13 @@ class RobotSim(robot.Robot):
     def control(self, dx: float, dy: float, dturn: float) -> None:
         """Pareil que pour update_velocity, choisit la méthode control selon ROBOT_VELOCITY_MODEL."""
         if ROBOT_VELOCITY_MODEL == "trig":
-            self._control_trig(dx, dy, dturn)
+            self._control_nn(dx, dy, dturn)
         elif ROBOT_VELOCITY_MODEL == "mlp":
             self._control_mlp(dx, dy, dturn)
+        elif ROBOT_VELOCITY_MODEL == "history":
+            self._control_nn(dx, dy, dturn)
         elif ROBOT_VELOCITY_MODEL == "original":
             self._control_original(dx, dy, dturn)
-        elif ROBOT_VELOCITY_MODEL == "memory":
-            self._control_trig(dx, dy, dturn)
         else:
             raise ValueError(f"Unknown ROBOT_VELOCITY_MODEL: {ROBOT_VELOCITY_MODEL}")
 
