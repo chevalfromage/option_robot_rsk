@@ -17,7 +17,9 @@ from rsk_neural_simulator.data.preparation_datas import MEMORY_WINDOW
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 base_path = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "data", "clean"))
 TRAINED_MODEL_DIR = os.path.join(SCRIPT_DIR, "trained_model")
-TRAINED_MODEL_NAME = "simple_nn3.pth"
+TRAINED_MODEL_NAME = "simple_nn_memory.pth"
+SCALER_X_NAME = "x_scaler_memory.pkl"
+SCALER_Y_NAME = "y_scaler_memory.pkl"
 
 all_dfs = []
 
@@ -147,7 +149,16 @@ X_test_t = torch.tensor(X_test_scaled, dtype=torch.float32)
 Y_test_t = torch.tensor(Y_test_scaled, dtype=torch.float32)
 
 
-model = SimpleNNMemory()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device:", device)
+
+model = SimpleNNMemory().to(device)
+X_train_t = X_train_t.to(device)
+Y_train_t = Y_train_t.to(device)
+X_val_t   = X_val_t.to(device)
+Y_val_t   = Y_val_t.to(device)
+X_test_t  = X_test_t.to(device)
+Y_test_t  = Y_test_t.to(device)
 
 
 criterion = nn.MSELoss() # fonction de loss
@@ -157,7 +168,7 @@ optimizer = optim.Adam(model.parameters(), lr=10e-4)  # descente de gradient
 
 # entrainement
 
-epochs = 1500
+epochs = 2500
 early_stop = 20
 val_loss_prev =0
 
@@ -267,7 +278,7 @@ plt.show()
 
 
 torch.save(model.state_dict(), os.path.join(TRAINED_MODEL_DIR, TRAINED_MODEL_NAME))
-joblib.dump(x_scaler, os.path.join(TRAINED_MODEL_DIR, "x_scalernn3.pkl"))
-joblib.dump(y_scaler, os.path.join(TRAINED_MODEL_DIR, "y_scalernn3.pkl"))
+joblib.dump(x_scaler, os.path.join(TRAINED_MODEL_DIR, SCALER_X_NAME))
+joblib.dump(y_scaler, os.path.join(TRAINED_MODEL_DIR, SCALER_Y_NAME))
 print("Modèle sauvegardé")
 

@@ -11,6 +11,9 @@ from pathlib import Path
 import sys
 import os
 
+from rsk_neural_simulator.data.preparation_datas import MEMORY_WINDOW
+from collections import deque
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     # Ensure sibling packages (e.g., rsk_neural_simulator) are importable
@@ -56,6 +59,9 @@ class SimulatedObject:
 
         self.velocity: np.ndarray = np.array([0.0, 0.0, 0.0])
         self.deceleration: float = deceleration
+
+        default_value = np.array([0.0, 0.0, 0.0, 0.0])
+        self.velocity_history = deque([default_value.copy() for _ in range(MEMORY_WINDOW)], maxlen=MEMORY_WINDOW)
 
         self.pending_actions: list(Callable) = []
         self.sim: Simulator = None
@@ -262,14 +268,15 @@ class SimulatedRobot(SimulatedObject):
         prediction = self.y_scaler.inverse_transform(y_scaled.cpu().numpy())[0]
 
         vx_robot_next, vy_robot_next, cos_next, sin_next = prediction
-
-        """ # Normalise cos/sin in case of slight drift
+        
+        """ 
+        # Normalise cos/sin in case of slight drift
         norm = float(np.hypot(cos_next, sin_next))
         if norm < 1e-6:
             cos_next, sin_next = cos_theta, sin_theta
             norm = 1.0
         cos_next /= norm
-        sin_next /= norm """
+        sin_next /= norm  """
 
         theta_next = float(np.arctan2(sin_next, cos_next))
         dtheta = np.arctan2(np.sin(theta_next - theta), np.cos(theta_next - theta))
@@ -280,6 +287,70 @@ class SimulatedRobot(SimulatedObject):
 
         self.velocity[:2] = velocity_world_next
         self.velocity[2] = omega_next
+
+    def _update_velocity_MLP_history(self, dt: float) -> None:
+        if dt <= 0:
+            # Fallback to legacy behaviour if the simulator ever passes dt<=0
+            self._update_velocity_original(max(dt, 0.0))
+            return
+
+        target_velocity_robot = self.control_cmd.astype(float)
+
+        # Current velocity expressed in world. Convert to robot frame to match training features.
+        T_world_robot = utils.frame(tuple(self.position))
+        R_robot_world = T_world_robot[:2, :2]  # rotation from robot -> world
+        velocity_world = self.velocity[:2]
+        velocity_robot = R_robot_world.T @ velocity_world  # world -> robot
+
+        theta = float(self.position[2])
+        cos_theta = float(np.cos(theta))
+        sin_theta = float(np.sin(theta))
+         
+        history_flat = np.concatenate(list(self.velocity_history))
+
+        nn_input = np.array(
+            [
+                target_velocity_robot[0],
+                target_velocity_robot[1],
+                target_velocity_robot[2],
+                velocity_robot[0],
+                velocity_robot[1],
+                cos_theta,
+                sin_theta,
+                *history_flat
+            ]
+        ).reshape(1, -1)
+
+        x_scaled = self.x_scaler.transform(nn_input)
+        x_tensor = torch.tensor(x_scaled, dtype=torch.float32)
+        with torch.no_grad():
+            y_scaled = self.model(x_tensor)
+        prediction = self.y_scaler.inverse_transform(y_scaled.cpu().numpy())[0]
+
+        vx_robot_next, vy_robot_next, cos_next, sin_next = prediction
+        
+        """ 
+        # Normalise cos/sin in case of slight drift
+        norm = float(np.hypot(cos_next, sin_next))
+        if norm < 1e-6:
+            cos_next, sin_next = cos_theta, sin_theta
+            norm = 1.0
+        cos_next /= norm
+        sin_next /= norm  """
+
+        theta_next = float(np.arctan2(sin_next, cos_next))
+        dtheta = np.arctan2(np.sin(theta_next - theta), np.cos(theta_next - theta))
+        omega_next = dtheta / dt
+
+        R_next = np.array([[cos_next, -sin_next], [sin_next, cos_next]])
+        velocity_world_next = R_next @ np.array([vx_robot_next, vy_robot_next])
+
+        self.velocity[:2] = velocity_world_next
+        self.velocity[2] = omega_next
+
+        # mise à jour de l'historique glissant
+        combined = np.array([velocity_robot[0], velocity_robot[1], cos_theta, sin_theta])
+        self.velocity_history.appendleft(combined) 
 
 
     def update_velocity(self, dt: float) -> None:
