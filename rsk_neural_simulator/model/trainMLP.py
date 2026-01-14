@@ -149,7 +149,7 @@ X_test_t = torch.tensor(X_test_scaled, dtype=torch.float32)
 Y_test_t = torch.tensor(Y_test_scaled, dtype=torch.float32)
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
 print("Using device:", device)
 
 model = SimpleNNMemory().to(device)
@@ -168,7 +168,7 @@ optimizer = optim.Adam(model.parameters(), lr=10e-4)  # descente de gradient
 
 # entrainement
 
-epochs = 1500
+epochs = 800
 early_stop = 20
 val_loss_prev =0
 
