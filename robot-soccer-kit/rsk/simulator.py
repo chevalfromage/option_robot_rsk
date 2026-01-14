@@ -330,13 +330,6 @@ class SimulatedRobot(SimulatedObject):
         vx_robot_next, vy_robot_next, cos_next, sin_next = prediction
         
         
-        """ # Normalise cos/sin in case of slight drift
-        norm = float(np.hypot(cos_next, sin_next))
-        if norm < 1e-6:
-            cos_next, sin_next = cos_theta, sin_theta
-            norm = 1.0
-        cos_next /= norm
-        sin_next /= norm  """
 
         theta_next = float(np.arctan2(sin_next, cos_next))
         dtheta = np.arctan2(np.sin(theta_next - theta), np.cos(theta_next - theta))
