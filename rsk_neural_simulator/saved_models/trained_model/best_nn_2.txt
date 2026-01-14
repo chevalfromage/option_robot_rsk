@@ -1,0 +1,199 @@
+DATASET : 
+
+paths(random waypoints inclus) + 
+random_waypoints + 
+grid sur g2 et b2 seulement
+
+Split dataset (60/20/20, seed 42)
+
+SHAPE : 
+
+orders[ dx,
+        xy,
+        dtheta]
+        (t)
+
+derivee[ dx/dt, 
+         dy/dt, 
+         cos(theta), 
+         sin(theta)]
+         (t)
+
+7 
+256 reLu
+dropout(0.3) reLu
+256 reLu
+256 
+4
+
+derivee[ dx/dt, 
+         dy/dt, 
+         cos(theta), 
+         sin(theta)]
+         (t + dt)
+
+HYPERPARAMETRES : 
+
+criterion = nn.MSELoss() 
+optimizer = optim.Adam(model.parameters(), lr=10e-4)  
+epochs = 1500
+early_stop = 20
+
+TRAINING : 
+
+(rskenv) ../i3a/projet_RSK/option_robot_rsk $ python -m rsk_neural_simulator.model.basicMLP
+Nombre total d'échantillons : 68468
+(32864, 7) (21910, 7) (13694, 7)
+Epoch    0 , train MSE = 1.004776 , val MSE = 0.961428
+Epoch   10 , train MSE = 0.203394 , val MSE = 0.222089
+Epoch   20 , train MSE = 0.151111 , val MSE = 0.137188
+Epoch   30 , train MSE = 0.110890 , val MSE = 0.096973
+Epoch   40 , train MSE = 0.096647 , val MSE = 0.088414
+Epoch   50 , train MSE = 0.089715 , val MSE = 0.083515
+Epoch   60 , train MSE = 0.086418 , val MSE = 0.079447
+Epoch   70 , train MSE = 0.083428 , val MSE = 0.076689
+Epoch   80 , train MSE = 0.081065 , val MSE = 0.074395
+Epoch   90 , train MSE = 0.079989 , val MSE = 0.073166
+Epoch  100 , train MSE = 0.077638 , val MSE = 0.071053
+Epoch  110 , train MSE = 0.078845 , val MSE = 0.073049
+Epoch  120 , train MSE = 0.076949 , val MSE = 0.069553
+Epoch  130 , train MSE = 0.074595 , val MSE = 0.068653
+Epoch  140 , train MSE = 0.073283 , val MSE = 0.067875
+Epoch  150 , train MSE = 0.074215 , val MSE = 0.068751
+Epoch  160 , train MSE = 0.072133 , val MSE = 0.067876
+Epoch  170 , train MSE = 0.071975 , val MSE = 0.066656
+Epoch  180 , train MSE = 0.071562 , val MSE = 0.066324
+Epoch  190 , train MSE = 0.070708 , val MSE = 0.065921
+Epoch  200 , train MSE = 0.070393 , val MSE = 0.065796
+Epoch  210 , train MSE = 0.073573 , val MSE = 0.068855
+Epoch  220 , train MSE = 0.070153 , val MSE = 0.066144
+Epoch  230 , train MSE = 0.069092 , val MSE = 0.064942
+Epoch  240 , train MSE = 0.068694 , val MSE = 0.064476
+Epoch  250 , train MSE = 0.067900 , val MSE = 0.064217
+Epoch  260 , train MSE = 0.068513 , val MSE = 0.064420
+Epoch  270 , train MSE = 0.071133 , val MSE = 0.067212
+Epoch  280 , train MSE = 0.068606 , val MSE = 0.064123
+Epoch  290 , train MSE = 0.066897 , val MSE = 0.063454
+Epoch  300 , train MSE = 0.066680 , val MSE = 0.063269
+Epoch  310 , train MSE = 0.066542 , val MSE = 0.063236
+Epoch  320 , train MSE = 0.066759 , val MSE = 0.063706
+Epoch  330 , train MSE = 0.065306 , val MSE = 0.062596
+Epoch  340 , train MSE = 0.064843 , val MSE = 0.062085
+Epoch  350 , train MSE = 0.066333 , val MSE = 0.063956
+Epoch  360 , train MSE = 0.065908 , val MSE = 0.062878
+Epoch  370 , train MSE = 0.064299 , val MSE = 0.061839
+Epoch  380 , train MSE = 0.064147 , val MSE = 0.061357
+Epoch  390 , train MSE = 0.063690 , val MSE = 0.061259
+Epoch  400 , train MSE = 0.063341 , val MSE = 0.061120
+Epoch  410 , train MSE = 0.065979 , val MSE = 0.065721
+Epoch  420 , train MSE = 0.063201 , val MSE = 0.062544
+Epoch  430 , train MSE = 0.062621 , val MSE = 0.060845
+Epoch  440 , train MSE = 0.062213 , val MSE = 0.060440
+Epoch  450 , train MSE = 0.062062 , val MSE = 0.060387
+Epoch  460 , train MSE = 0.061350 , val MSE = 0.060133
+Epoch  470 , train MSE = 0.065776 , val MSE = 0.067049
+Epoch  480 , train MSE = 0.063724 , val MSE = 0.061180
+Epoch  490 , train MSE = 0.061844 , val MSE = 0.059966
+Epoch  500 , train MSE = 0.061327 , val MSE = 0.059779
+Epoch  510 , train MSE = 0.060631 , val MSE = 0.059629
+Epoch  520 , train MSE = 0.060565 , val MSE = 0.059443
+Epoch  530 , train MSE = 0.060103 , val MSE = 0.059386
+Epoch  540 , train MSE = 0.061659 , val MSE = 0.061278
+Epoch  550 , train MSE = 0.061588 , val MSE = 0.060169
+Epoch  560 , train MSE = 0.060070 , val MSE = 0.059254
+Epoch  570 , train MSE = 0.059642 , val MSE = 0.059127
+Epoch  580 , train MSE = 0.059422 , val MSE = 0.059306
+Epoch  590 , train MSE = 0.059225 , val MSE = 0.059067
+Epoch  600 , train MSE = 0.059336 , val MSE = 0.059201
+Epoch  610 , train MSE = 0.061250 , val MSE = 0.061358
+Epoch  620 , train MSE = 0.058792 , val MSE = 0.059100
+Epoch  630 , train MSE = 0.058637 , val MSE = 0.058759
+Epoch  640 , train MSE = 0.058735 , val MSE = 0.058760
+Epoch  650 , train MSE = 0.058680 , val MSE = 0.059318
+Epoch  660 , train MSE = 0.060473 , val MSE = 0.058902
+Epoch  670 , train MSE = 0.058207 , val MSE = 0.058635
+Epoch  680 , train MSE = 0.058247 , val MSE = 0.059058
+Epoch  690 , train MSE = 0.057783 , val MSE = 0.058795
+Epoch  700 , train MSE = 0.057404 , val MSE = 0.058511
+Epoch  710 , train MSE = 0.058809 , val MSE = 0.060709
+Epoch  720 , train MSE = 0.059073 , val MSE = 0.059756
+Epoch  730 , train MSE = 0.057509 , val MSE = 0.058574
+Epoch  740 , train MSE = 0.057191 , val MSE = 0.058573
+Epoch  750 , train MSE = 0.057049 , val MSE = 0.058415
+Epoch  760 , train MSE = 0.056938 , val MSE = 0.058377
+Epoch  770 , train MSE = 0.057547 , val MSE = 0.059817
+Epoch  780 , train MSE = 0.057144 , val MSE = 0.060069
+Epoch  790 , train MSE = 0.057172 , val MSE = 0.059067
+Epoch  800 , train MSE = 0.056572 , val MSE = 0.058392
+Epoch  810 , train MSE = 0.056412 , val MSE = 0.058325
+Epoch  820 , train MSE = 0.056026 , val MSE = 0.058360
+Epoch  830 , train MSE = 0.056546 , val MSE = 0.058428
+Epoch  840 , train MSE = 0.056743 , val MSE = 0.058696
+Epoch  850 , train MSE = 0.055823 , val MSE = 0.058406
+Epoch  860 , train MSE = 0.056880 , val MSE = 0.059716
+Epoch  870 , train MSE = 0.055823 , val MSE = 0.058751
+Epoch  880 , train MSE = 0.055725 , val MSE = 0.058594
+Epoch  890 , train MSE = 0.055691 , val MSE = 0.058476
+Epoch  900 , train MSE = 0.055123 , val MSE = 0.058464
+Epoch  910 , train MSE = 0.057658 , val MSE = 0.061499
+Epoch  920 , train MSE = 0.056299 , val MSE = 0.058566
+Epoch  930 , train MSE = 0.055405 , val MSE = 0.058245
+Epoch  940 , train MSE = 0.055188 , val MSE = 0.058409
+Epoch  950 , train MSE = 0.054871 , val MSE = 0.058270
+Epoch  960 , train MSE = 0.055157 , val MSE = 0.059328
+Epoch  970 , train MSE = 0.057633 , val MSE = 0.062238
+Epoch  980 , train MSE = 0.054994 , val MSE = 0.059660
+Epoch  990 , train MSE = 0.054771 , val MSE = 0.058739
+Epoch 1000 , train MSE = 0.054310 , val MSE = 0.058704
+Epoch 1010 , train MSE = 0.054301 , val MSE = 0.058267
+Epoch 1020 , train MSE = 0.054249 , val MSE = 0.058427
+Epoch 1030 , train MSE = 0.054401 , val MSE = 0.058320
+Epoch 1040 , train MSE = 0.054137 , val MSE = 0.058390
+Epoch 1050 , train MSE = 0.054282 , val MSE = 0.058487
+Epoch 1060 , train MSE = 0.053809 , val MSE = 0.058296
+Epoch 1070 , train MSE = 0.053752 , val MSE = 0.058553
+Epoch 1080 , train MSE = 0.056051 , val MSE = 0.060672
+Epoch 1090 , train MSE = 0.054016 , val MSE = 0.058303
+Epoch 1100 , train MSE = 0.053713 , val MSE = 0.058621
+Epoch 1110 , train MSE = 0.053815 , val MSE = 0.058872
+Epoch 1120 , train MSE = 0.053490 , val MSE = 0.059069
+Epoch 1130 , train MSE = 0.054026 , val MSE = 0.058632
+Epoch 1140 , train MSE = 0.053205 , val MSE = 0.058501
+Epoch 1150 , train MSE = 0.053362 , val MSE = 0.058994
+Epoch 1160 , train MSE = 0.053422 , val MSE = 0.060487
+Epoch 1170 , train MSE = 0.053625 , val MSE = 0.059559
+Epoch 1180 , train MSE = 0.053384 , val MSE = 0.058868
+Epoch 1190 , train MSE = 0.053299 , val MSE = 0.059166
+Epoch 1200 , train MSE = 0.056477 , val MSE = 0.061421
+Epoch 1210 , train MSE = 0.052783 , val MSE = 0.059301
+Epoch 1220 , train MSE = 0.052667 , val MSE = 0.058540
+Epoch 1230 , train MSE = 0.052955 , val MSE = 0.058701
+Epoch 1240 , train MSE = 0.052413 , val MSE = 0.058743
+Epoch 1250 , train MSE = 0.052386 , val MSE = 0.058519
+Epoch 1260 , train MSE = 0.053648 , val MSE = 0.059715
+Epoch 1270 , train MSE = 0.052763 , val MSE = 0.059467
+Epoch 1280 , train MSE = 0.052693 , val MSE = 0.058962
+Epoch 1290 , train MSE = 0.052101 , val MSE = 0.059124
+Epoch 1300 , train MSE = 0.052124 , val MSE = 0.058816
+Epoch 1310 , train MSE = 0.052724 , val MSE = 0.060510
+Epoch 1320 , train MSE = 0.052264 , val MSE = 0.059247
+Epoch 1330 , train MSE = 0.052049 , val MSE = 0.058695
+Epoch 1340 , train MSE = 0.051843 , val MSE = 0.058892
+Epoch 1350 , train MSE = 0.052919 , val MSE = 0.060210
+Epoch 1360 , train MSE = 0.052555 , val MSE = 0.059959
+Epoch 1370 , train MSE = 0.051651 , val MSE = 0.059049
+Epoch 1380 , train MSE = 0.051481 , val MSE = 0.058762
+Epoch 1390 , train MSE = 0.051514 , val MSE = 0.058714
+Epoch 1400 , train MSE = 0.053802 , val MSE = 0.062696
+Epoch 1410 , train MSE = 0.052864 , val MSE = 0.059042
+Epoch 1420 , train MSE = 0.051847 , val MSE = 0.058909
+Epoch 1430 , train MSE = 0.051191 , val MSE = 0.058801
+Epoch 1440 , train MSE = 0.051200 , val MSE = 0.058990
+Epoch 1450 , train MSE = 0.053113 , val MSE = 0.062155
+Epoch 1460 , train MSE = 0.053463 , val MSE = 0.059285
+Epoch 1470 , train MSE = 0.051046 , val MSE = 0.059514
+Epoch 1480 , train MSE = 0.050964 , val MSE = 0.058686
+Epoch 1490 , train MSE = 0.050323 , val MSE = 0.058820
+Test MSE : 0.05773961544036865
+Train (eval) MSE : 0.04475752264261246
+Modèle sauvegardé
