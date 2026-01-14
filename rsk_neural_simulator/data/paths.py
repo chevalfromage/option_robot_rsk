@@ -314,7 +314,8 @@ grid_path = PausingWaypointPath(
 
 
 DEFAULT_PATHS: List[BasePath] = [
-                                 grid_path
+                                 
+                                    grid_path
                                  ]
 
 

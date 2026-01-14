@@ -207,7 +207,6 @@ class SimulatedRobot(SimulatedObject):
         x_input = np.concatenate([target_velocity_robot, velocity_robot]).reshape(1, -1)
         x_scaled = self.x_scaler.transform(x_input)
         x_tensor = torch.tensor(x_scaled, dtype=torch.float32)
-        # prediction avec le MLP
         with torch.no_grad():
             y_scaled = self.model(x_tensor)
         y_scaled = y_scaled.cpu().numpy()
@@ -227,7 +226,11 @@ class SimulatedRobot(SimulatedObject):
     # fonction qui calcule la prochaine vitesse via un MLP qui utilise des fonctions trigonométriques pour éviter les 
     # discontinuités sur theta
     def _update_velocity_MLP_trig(self, dt: float) -> None:
-        # recup la commande de vitesse 
+        if dt <= 0:
+            # Fallback to legacy behaviour if the simulator ever passes dt<=0
+            self._update_velocity_original(max(dt, 0.0))
+            return
+
         target_velocity_robot = self.control_cmd.astype(float)
 
         # Current velocity expressed in world. Convert to robot frame to match training features.
@@ -240,7 +243,6 @@ class SimulatedRobot(SimulatedObject):
         cos_theta = float(np.cos(theta))
         sin_theta = float(np.sin(theta))
 
-        # vecteur d'input pour le NN 
         nn_input = np.array(
             [
                 target_velocity_robot[0],
@@ -255,14 +257,12 @@ class SimulatedRobot(SimulatedObject):
 
         x_scaled = self.x_scaler.transform(nn_input)
         x_tensor = torch.tensor(x_scaled, dtype=torch.float32)
-        # preediction avec le MLP
         with torch.no_grad():
             y_scaled = self.model(x_tensor)
         prediction = self.y_scaler.inverse_transform(y_scaled.cpu().numpy())[0]
 
         vx_robot_next, vy_robot_next, cos_next, sin_next = prediction
 
-        # ca à voir je sais pas si c'est utile
         """ # Normalise cos/sin in case of slight drift
         norm = float(np.hypot(cos_next, sin_next))
         if norm < 1e-6:
@@ -338,7 +338,7 @@ class RobotSim(robot.Robot):
 
     def control(self, dx: float, dy: float, dturn: float) -> None:
         """Pareil que pour update_velocity, choisit la méthode control selon ROBOT_VELOCITY_MODEL."""
-        if ROBOT_VELOCITY_MODEL == "nn":
+        if ROBOT_VELOCITY_MODEL == "trig":
             self._control_nn(dx, dy, dturn)
         elif ROBOT_VELOCITY_MODEL == "mlp":
             self._control_mlp(dx, dy, dturn)
