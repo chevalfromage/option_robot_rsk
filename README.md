@@ -3,7 +3,7 @@
 ## Activer l'environnement virtuel python: 
 
 ```bash
-./rsk_neural_simulator/venv/Scripts/Activate.ps1
+./venv/Scripts/Activate.ps1
 ```
 
 ## Activer le simulatuer ou le game controler:
