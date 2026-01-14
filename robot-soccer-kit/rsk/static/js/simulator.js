@@ -359,8 +359,9 @@ function simulator_initialize(backend, isView) {
         display_settings = {
             "landmark": { "label": "Center Landmark", "default": true, "type": "" },
             "timed_circle": { "label": "Timed Circle", "default": false, "type": "" },
-            "goto_targets": { "label": "Goto Targets", "default": true, "type": "" },
-            "orders_vector": { "label": "Goto Orders", "default": true, "type": "" },
+            //"goto_targets": { "label": "Goto Targets", "default": true, "type": "" },
+            // Désactivé par défaut : flèche rouge indiquant les ordres
+            //"orders_vector": { "label": "Goto Orders", "default": false, "type": "" },
         }
         for (setting_name in display_settings) {
             display_settings[setting_name]["value"] = display_settings[setting_name]["default"]

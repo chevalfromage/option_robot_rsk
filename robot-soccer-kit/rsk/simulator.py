@@ -15,14 +15,15 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     # Ensure sibling packages (e.g., rsk_neural_simulator) are importable
     sys.path.append(str(PROJECT_ROOT))
+    
 
 TRAINED_MODEL_DIR = PROJECT_ROOT / "rsk_neural_simulator" / "model" / "trained_model"
-MODEL_PATH = TRAINED_MODEL_DIR / "best_nn_1.pth"
+MODEL_PATH = TRAINED_MODEL_DIR / "best_nn2.pth"
 X_SCALER_PATH = TRAINED_MODEL_DIR / "x_scaler.pkl"
 Y_SCALER_PATH = TRAINED_MODEL_DIR / "y_scaler.pkl"
 
 import torch
-from rsk_neural_simulator.saved_models.SimpleNN import SimpleNN
+from rsk_neural_simulator.model.SimpleNN import SimpleNN
 
 import joblib
 import warnings
@@ -30,9 +31,13 @@ import warnings
 
 # Constantes pour savoir quels robots faire spawn et ou 
 SIMULATION_CONFIGURATION = "side"
-# Only robots explicitly listed here will spawn (team -> set of numbers)
-SIMULATION_MARKERS = {"green": {1}}
+# seulement les robots listés ici vont spawn dans la simulation
+# mettre vide pour tous les faire spawn
+#SIMULATION_MARKERS = {"green": {1}}
+SIMULATION_MARKERS = {}
 
+
+ROBOT_VELOCITY_MODEL = "trig"  # "original", "mlp" ou "trig"
 
 class SimulatedObject:
     def __init__(
@@ -164,13 +169,16 @@ class SimulatedRobot(SimulatedObject):
             self.sim.objects["ball"].velocity[:2] = (
                 T_world_robot[:2, :2] @ ball_speed_robot
             )
-
-    def update_velocity_original(self, dt: float) -> None:
+            
+    # fonction native du simulateur RSK qui utilise aucun MLP 
+    def _update_velocity_original(self, dt: float) -> None:
         target_velocity_robot = self.control_cmd
 
+        # mat de transformation du repère robot au repère monde
         T_world_robot = utils.frame(tuple(self.position))
         target_velocity_world = T_world_robot[:2, :2] @ target_velocity_robot[:2]
 
+        # fait converger la vitesse actuelle vers la vitesse cible en limitant l'accélération
         self.velocity[:2] = utils.update_limit_variation(
             self.velocity[:2],
             target_velocity_world,
@@ -182,11 +190,13 @@ class SimulatedRobot(SimulatedObject):
             constants.max_angular_acceleration * dt,
         )
 
-        print(f"order : {self.control_cmd} , self.velocity : {self.velocity}")
+        #print(f"order : {self.control_cmd} , self.velocity : {self.velocity}")
 
-    def update_velocity(self, dt: float) -> None: #updating velovity via MLP
-        target_velocity_robot = self.control_cmd # entrée 1 du MLP (vecteur direction à suivre) // bon car changement de la fonction control 
-        velocity_robot  = self.velocity # entrée 2 du MLP (vecteur vitesse actuel)
+    # fonction qu'on a ajouté pour compute next_speed,  via un MLP qui prend en entrée : 
+    # ordre de vitesse + vitesse actuelle , et qui prédit la prochaine vitesse
+    def _update_velocity_mlp(self, dt: float) -> None:
+        target_velocity_robot = self.control_cmd 
+        velocity_robot  = self.velocity
 
         prediction_velocity_robot: np.ndarray = np.array([0.0, 0.0, 0.0]) # sortie du MPL (vitesse prédite)
 
@@ -197,6 +207,7 @@ class SimulatedRobot(SimulatedObject):
         x_input = np.concatenate([target_velocity_robot, velocity_robot]).reshape(1, -1)
         x_scaled = self.x_scaler.transform(x_input)
         x_tensor = torch.tensor(x_scaled, dtype=torch.float32)
+        # prediction avec le MLP
         with torch.no_grad():
             y_scaled = self.model(x_tensor)
         y_scaled = y_scaled.cpu().numpy()
@@ -213,15 +224,85 @@ class SimulatedRobot(SimulatedObject):
         # print(f" marker : {self.marker} order : {self.control_cmd} , self.velocity : {self.velocity}")
 
 
+    # fonction qui calcule la prochaine vitesse via un MLP qui utilise des fonctions trigonométriques pour éviter les 
+    # discontinuités sur theta
+    def _update_velocity_MLP_trig(self, dt: float) -> None:
+        # recup la commande de vitesse 
+        target_velocity_robot = self.control_cmd.astype(float)
+
+        # Current velocity expressed in world. Convert to robot frame to match training features.
+        T_world_robot = utils.frame(tuple(self.position))
+        R_robot_world = T_world_robot[:2, :2]  # rotation from robot -> world
+        velocity_world = self.velocity[:2]
+        velocity_robot = R_robot_world.T @ velocity_world  # world -> robot
+
+        theta = float(self.position[2])
+        cos_theta = float(np.cos(theta))
+        sin_theta = float(np.sin(theta))
+
+        # vecteur d'input pour le NN 
+        nn_input = np.array(
+            [
+                target_velocity_robot[0],
+                target_velocity_robot[1],
+                target_velocity_robot[2],
+                velocity_robot[0],
+                velocity_robot[1],
+                cos_theta,
+                sin_theta,
+            ]
+        ).reshape(1, -1)
+
+        x_scaled = self.x_scaler.transform(nn_input)
+        x_tensor = torch.tensor(x_scaled, dtype=torch.float32)
+        # preediction avec le MLP
+        with torch.no_grad():
+            y_scaled = self.model(x_tensor)
+        prediction = self.y_scaler.inverse_transform(y_scaled.cpu().numpy())[0]
+
+        vx_robot_next, vy_robot_next, cos_next, sin_next = prediction
+
+        # ca à voir je sais pas si c'est utile
+        """ # Normalise cos/sin in case of slight drift
+        norm = float(np.hypot(cos_next, sin_next))
+        if norm < 1e-6:
+            cos_next, sin_next = cos_theta, sin_theta
+            norm = 1.0
+        cos_next /= norm
+        sin_next /= norm """
+
+        theta_next = float(np.arctan2(sin_next, cos_next))
+        dtheta = np.arctan2(np.sin(theta_next - theta), np.cos(theta_next - theta))
+        omega_next = dtheta / dt
+
+        R_next = np.array([[cos_next, -sin_next], [sin_next, cos_next]])
+        velocity_world_next = R_next @ np.array([vx_robot_next, vy_robot_next])
+
+        self.velocity[:2] = velocity_world_next
+        self.velocity[2] = omega_next
+
+
+    def update_velocity(self, dt: float) -> None:
+        """Point d'enrtrée unique pour la MAJ des vitesses, selon le modèle choisi."""
+        if ROBOT_VELOCITY_MODEL == "trig":
+            self._update_velocity_MLP_trig(dt)
+        elif ROBOT_VELOCITY_MODEL == "mlp":
+            self._update_velocity_mlp(dt)
+        elif ROBOT_VELOCITY_MODEL == "original":
+            self._update_velocity_original(dt)
+        else:
+            raise ValueError(f"Modèle inconnu: {ROBOT_VELOCITY_MODEL}")
+
+
     def control_leds(self, r: int, g: int, b: int) -> None:
         self.leds = [r, g, b]
+
 
 
 class RobotSim(robot.Robot):
     def __init__(self, url: str):
         super().__init__(url)
         self.set_marker(url)
-
         self.object: SimulatedRobot = None
 
     def initialize(self, position: np.ndarray) -> None:
@@ -237,13 +318,34 @@ class RobotSim(robot.Robot):
         """
         self.object.teleport(x, y, turn)
 
-    def control_original(self, dx: float, dy: float, dturn: float) -> None:
+    def _control_original(self, dx: float, dy: float, dturn: float) -> None:
         self.object.control_cmd = kinematics.clip_target_order(
             np.array([dx, dy, dturn])
         )
 
-    def control(self, dx: float, dy: float, dturn: float) -> None:
+    def _control_mlp(self, dx: float, dy: float, dturn: float) -> None:
         self.object.control_cmd = np.array([dx, dy, dturn])
+
+    def _control_nn(self, dx: float, dy: float, dturn: float) -> None:
+        """Prépare les commandes pour le NN afin de matcher le dataset d'entraînement."""
+        order_world = np.array([dx, dy], dtype=float)
+        T_world_robot = utils.frame(tuple(self.object.position))
+        R_robot_world = T_world_robot[:2, :2]
+        order_robot_xy = R_robot_world.T @ order_world
+
+        order_robot = np.array([order_robot_xy[0], order_robot_xy[1], float(dturn)], dtype=float)
+        self.object.control_cmd = kinematics.clip_target_order(order_robot)
+
+    def control(self, dx: float, dy: float, dturn: float) -> None:
+        """Pareil que pour update_velocity, choisit la méthode control selon ROBOT_VELOCITY_MODEL."""
+        if ROBOT_VELOCITY_MODEL == "nn":
+            self._control_nn(dx, dy, dturn)
+        elif ROBOT_VELOCITY_MODEL == "mlp":
+            self._control_mlp(dx, dy, dturn)
+        elif ROBOT_VELOCITY_MODEL == "original":
+            self._control_original(dx, dy, dturn)
+        else:
+            raise ValueError(f"Unknown ROBOT_VELOCITY_MODEL: {ROBOT_VELOCITY_MODEL}")
 
     def kick(self, power: float = 1.0) -> None:
         self.object.pending_actions.append(lambda: self.object.compute_kick(power))
