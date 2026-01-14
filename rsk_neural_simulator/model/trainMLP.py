@@ -168,7 +168,7 @@ optimizer = optim.Adam(model.parameters(), lr=10e-4)  # descente de gradient
 
 # entrainement
 
-epochs = 2500
+epochs = 1500
 early_stop = 20
 val_loss_prev =0
 
