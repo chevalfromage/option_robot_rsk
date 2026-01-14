@@ -149,7 +149,14 @@ X_test_t = torch.tensor(X_test_scaled, dtype=torch.float32)
 Y_test_t = torch.tensor(Y_test_scaled, dtype=torch.float32)
 
 
-device = torch.device("cpu")
+# Select device: prefer MPS on Apple Silicon, then CUDA, otherwise CPU
+if getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available() and torch.backends.mps.is_built():
+    device = torch.device("mps")
+elif torch.cuda.is_available():
+    device = torch.device("cuda")
+else:
+    device = torch.device("cpu")
+
 print("Using device:", device)
 
 model = SimpleNNMemory().to(device)
