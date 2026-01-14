@@ -21,12 +21,12 @@ if str(PROJECT_ROOT) not in sys.path:
     
 
 TRAINED_MODEL_DIR = PROJECT_ROOT / "rsk_neural_simulator" / "model" / "trained_model"
-MODEL_PATH = TRAINED_MODEL_DIR / "best_nn2.pth"
-X_SCALER_PATH = TRAINED_MODEL_DIR / "x_scaler.pkl"
-Y_SCALER_PATH = TRAINED_MODEL_DIR / "y_scaler.pkl"
+MODEL_PATH = TRAINED_MODEL_DIR / "simple_nn_memory.pth"
+X_SCALER_PATH = TRAINED_MODEL_DIR / "x_scaler_memory.pkl"
+Y_SCALER_PATH = TRAINED_MODEL_DIR / "y_scaler_memory.pkl"
 
 import torch
-from rsk_neural_simulator.model.SimpleNN import SimpleNN
+from rsk_neural_simulator.model.SimpleNN import SimpleNN, SimpleNN3, SimpleNNMemory
 
 import joblib
 import warnings
@@ -40,7 +40,7 @@ SIMULATION_CONFIGURATION = "side"
 SIMULATION_MARKERS = {}
 
 
-ROBOT_VELOCITY_MODEL = "trig"  # "original", "mlp" ou "trig"
+ROBOT_VELOCITY_MODEL = "history"  # "original", "mlp", "history" ou "trig"
 
 class SimulatedObject:
     def __init__(
@@ -143,7 +143,7 @@ class SimulatedRobot(SimulatedObject):
                 "from the project root to generate them."
             )
 
-        self.model = SimpleNN()
+        self.model = SimpleNNMemory()
         self.model.load_state_dict(torch.load(MODEL_PATH))
         self.model.eval()
         self.x_scaler = joblib.load(X_SCALER_PATH)
@@ -357,6 +357,8 @@ class SimulatedRobot(SimulatedObject):
         """Point d'enrtrée unique pour la MAJ des vitesses, selon le modèle choisi."""
         if ROBOT_VELOCITY_MODEL == "trig":
             self._update_velocity_MLP_trig(dt)
+        elif ROBOT_VELOCITY_MODEL == "history":
+            self._update_velocity_MLP_history(dt)
         elif ROBOT_VELOCITY_MODEL == "mlp":
             self._update_velocity_mlp(dt)
         elif ROBOT_VELOCITY_MODEL == "original":
@@ -413,6 +415,8 @@ class RobotSim(robot.Robot):
             self._control_nn(dx, dy, dturn)
         elif ROBOT_VELOCITY_MODEL == "mlp":
             self._control_mlp(dx, dy, dturn)
+        elif ROBOT_VELOCITY_MODEL == "history":
+            self._control_nn(dx, dy, dturn)
         elif ROBOT_VELOCITY_MODEL == "original":
             self._control_original(dx, dy, dturn)
         else:
