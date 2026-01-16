@@ -107,8 +107,14 @@ def cleaner_data(datas_fichier_in):
         pos = datas[instant]["robot_pose"]
 
         diff = {axe: pos[axe] - pos_prev[axe] for axe in pos}
-        if diff["x"] != 0 and diff["y"] != 0 and diff["theta"] != 0:
+        
+        if diff["x"] != 0 and diff["y"] != 0 and diff["theta"] != 0: #ce filtre j'ai des doutes
             datas_out.append(datas[instant])
+
+        #vous etes sur ici c'est pas plutot des or ? 
+        #if diff["x"] != 0 or diff["y"] != 0 or diff["theta"] != 0:
+        #    datas_out.append(datas[instant])
+
 
     theta_series_raw = [entry["robot_pose"]["theta"] for entry in datas_out]
     x_series_raw = [entry["robot_pose"]["x"] for entry in datas_out]
@@ -133,10 +139,16 @@ def cleaner_data(datas_fichier_in):
         derivee_y = (pos["y"] - pos_prev["y"]) / dt
 
         theta_curr = theta_series[instant]
+        # Projection monde -> repère robot (égocentrique)
+        c = float(np.cos(theta_curr))
+        s = float(np.sin(theta_curr))
+        
+        derivee_xr = c * derivee_x + s * derivee_y
+        derivee_yr = -s * derivee_x + c * derivee_y
 
         derivee = {
-            "x": derivee_x,
-            "y": derivee_y,
+            "x": derivee_xr,
+            "y": derivee_yr,
             "theta_cos": float(np.cos(theta_curr)),
             "theta_sin": float(np.sin(theta_curr)),
         }
