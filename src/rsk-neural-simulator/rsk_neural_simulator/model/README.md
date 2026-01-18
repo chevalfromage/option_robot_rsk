@@ -10,9 +10,9 @@ This module contains the neural network architectures and training pipeline used
 ## Training the model
 
 The model is trained from prepared datasets located in:
-
+```bash
 rsk_neural_simulator/data/clean/
-
+```
 From the **repository root** (with the virtual environment activated), run:
 ```bash
 python -m rsk_neural_simulator.model.trainMLP

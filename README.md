@@ -14,7 +14,7 @@
 
 <img src="assets/img/cover.png"> 
 
-[User documentation](docs/user) • [Developer documentation](docs/developer) • [Project report](docs/report) • [Bibliography](docs/bibliography) 
+[User documentation](docs/user/README.md) • [Developer documentation](docs/developer/README.md) • [Project report](docs/report/README.md) • [Bibliography](docs/bibliography/README.md) 
   
 ## This project in short
 

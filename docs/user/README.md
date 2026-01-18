@@ -1,4 +1,4 @@
-# 📖 User documentation
+#  User documentation
 
 ## Purpose
 
@@ -26,7 +26,7 @@ From a user perspective:
 
 Installation and launch instructions are provided in the **Quickstart section of the main README**:
 
-➡️ [`README.md` at the repository root](../../README.md)
+[`README.md` at the repository root](../../README.md)
 
 ---
 

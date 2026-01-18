@@ -9,7 +9,7 @@ The goal is to study data-driven dynamics modeling and reduce the sim-to-real ga
 This work is developed in an academic and pedagogical context and is intended as an experimental baseline rather than a production-ready simulator.
 
 ## Package structure
-
+```bash
 rsk_neural_simulator/
 ├── data/
 │   ├── clean/                # Cleaned trajectory datasets (JSON)
@@ -20,12 +20,17 @@ rsk_neural_simulator/
 │   └── trained_model/        # Trained weights and scalers (generated)
 ├── evaluate/                 # Evaluation and plotting utilities
 └── __init__.py
+```
+## Aquiring Training Data
+
+To acquire raw data from the real-world robot soccer kit, please follow the [data module documentation](rsk_neural_simulator/data/README.md)
 
 ## Training the neural model
 
 Training is performed using cleaned trajectory data located in:
-
+```bash
 rsk_neural_simulator/data/clean/
+````
 
 All `.json` files are discovered recursively.
 
@@ -39,9 +44,11 @@ This script:
 
 * Trains a multilayer perceptron (MLP) to predict robot velocity updates
 * Automatically uses CUDA if available
-* Generates the following artifacts:
+* Generates the following artifacts at this path :
 
+```bash
 rsk_neural_simulator/model/trained_model/
+````
 
 * `simple_nn_memory.pth`
 * `x_scaler_memory.pkl`
@@ -49,6 +56,8 @@ rsk_neural_simulator/model/trained_model/
 
 These filenames are **explicitly expected by the simulator code**.
 If they are missing, the simulator will raise a `FileNotFoundError` at startup.
+
+For more documentation about model training please check the [model documentation](rsk_neural_simulator/model/README.md).
 
 ## Integration with the RSK simulator
 

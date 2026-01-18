@@ -1,4 +1,4 @@
-# 📖 Developer documentation
+#  Developer documentation
 
 ## Purpose
 
@@ -22,7 +22,7 @@ The neural model is integrated inside the RSK simulator codepath (no change requ
 ## Neural simulator architecture
 
 The `rsk_neural_simulator` package is structured as follows:
-
+```bash
 rsk_neural_simulator/
 ├── data/
 │ ├── clean/ # Cleaned trajectory datasets (JSON, generated)
@@ -33,6 +33,7 @@ rsk_neural_simulator/
 │ └── trained_model/ # Trained weights and scalers (generated artifacts)
 ├── evaluate/ # Evaluation and plotting utilities
 └── init.py
+```
 
 - **`data/`**  
   Data acquisition, visualization, and preprocessing pipeline.  
