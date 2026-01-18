@@ -101,8 +101,8 @@ If you want to plot the comparison between your raw and smoothed data set this v
 You will find the plots at this path :
 ```bash
 data/plots/
-├── smoothing_cross.png
-├── smoothing_grid_cover.png
-└── smoothing_square.png
+        ├── smoothing_cross.png
+        ├── smoothing_grid_cover.png
+        └── smoothing_square.png
 ```
 
