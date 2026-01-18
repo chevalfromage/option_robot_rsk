@@ -4,3 +4,5 @@ This section contains background references and a state-of-the-art review on sim
 It is not limited to this specific project but provides broader scientific context and related approaches.
 
 [Link to the bibliography report (*état de l'art*)](./Projet_Rhoban_RSK_Etat_de_Art.pdf)
+
+**Note:** The state-of-the-art report is written in French, as it was produced in an academic context.
