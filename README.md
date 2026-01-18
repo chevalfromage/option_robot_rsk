@@ -9,7 +9,7 @@
   <img src="assets/img/blue1.png" alt="Right logo" width="60"/>
 </h1>
 
-**Description:** This project explores the replacement of an analytical dynamics simulator of the Robot Soccer Kit (https://robot-soccer-kit.github.io/) by a learning-based neural simulator trained from real-world data. The goal is to reduce the sim-to-real gap.
+**Description:** This project explores the replacement of an analytical dynamics simulator of the [Robot Soccer Kit](https://robot-soccer-kit.github.io/) by a learning-based neural simulator trained from real-world data. The goal is to reduce the sim-to-real gap.
 
 
 <img src="assets/img/cover.png"> 
@@ -21,8 +21,7 @@
 
 * **Context & intented users**
 
-This project is developed in an academic context around the Robot Soccer Kit (RSK)
-(https://robot-soccer-kit.github.io/), an open robotics platform created by the
+This project is developed in an academic context around the [Robot Soccer Kit (RSK)](https://robot-soccer-kit.github.io/), an open robotics platform created by the
 Rhoban laboratory.
 
 It was developed at the request of the Rhoban laboratory for academic and
@@ -85,7 +84,7 @@ https://robot-soccer-kit.github.io/documentation
 
 ## About this project
 
-| **Client**          | Rhoban (https://www.rhoban.com/fr)                                     |
+| **Client**          | [Rhoban](https://www.rhoban.com/fr)                                     |
 |:------------------:|:------------------------------------------------------------------------:|
 | **Confidentiality**| **Public**                                                              |
 | **License**        | Creative Commons Attribution–NonCommercial 2.0 Generic (CC BY-NC 2.0)   |
