@@ -85,12 +85,11 @@ https://robot-soccer-kit.github.io/documentation
 
 ## About this project
 
-|       |        |
-|:----------------------------:|:-----------------------------------------------------------------------:|
-| **Client**                |  Rhoban       (https://www.rhoban.com/fr)                                        |
-| **Confidentiality**       | **Public**                                          |
-| **License**               |  Creative Commons Attribution–NonCommercial 2.0 Generic (CC BY-NC 2.0)          |
-| **Authors**               |  César LARRAGUETA, Olivier ROUAULT, Antony THIERY   |
+| **Client**          | Rhoban (https://www.rhoban.com/fr)                                     |
+|:------------------:|:------------------------------------------------------------------------:|
+| **Confidentiality**| **Public**                                                              |
+| **License**        | Creative Commons Attribution–NonCommercial 2.0 Generic (CC BY-NC 2.0)   |
+| **Authors**        | César LARRAGUETA, Olivier ROUAULT, Antony THIERY                         |
 
 
 <!-- ## Additional advices
