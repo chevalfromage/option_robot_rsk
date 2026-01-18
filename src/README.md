@@ -24,6 +24,8 @@ It includes:
 
 The neural simulator is designed as a standalone Python package that need to be installed alongside the RSK codebase and imported by the simulator when needed.
 
+To know more about each component please read [rsk-neural-simulator documentation](rsk-neural-simulator/README.md)
+
 ## Relationship between components
 
 The `robot-soccer-kit` component is responsible for simulation orchestration and execution, while `rsk-neural-simulator` provides the conception of the neural simulator.

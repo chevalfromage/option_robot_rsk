@@ -14,7 +14,7 @@
 
 <img src="assets/img/cover.png"> 
 
-[User documentation](docs/user) • [Developer documentation](docs/developer) • [Project report](docs/report) • [Bibliography](docs/bibliography) 
+[User documentation](docs/user/README.md) • [Developer documentation](docs/developer/README.md) • [Project report](docs/report/README.md) • [Bibliography](docs/bibliography/README.md) 
   
 ## This project in short
 
@@ -24,13 +24,13 @@
 This project is developed in an academic context around the [Robot Soccer Kit (RSK)](https://robot-soccer-kit.github.io/), an open robotics platform created by the
 Rhoban laboratory.
 
-It was developed at the request of the Rhoban laboratory for academic and
+It was developed at the request of the [Rhoban laboratory](https://www.rhoban.com/fr) for academic and
 research purposes, and targets students and researchers interested in robotics
 simulation and sim-to-real approaches.
 
 * **Motivation**: why this project exists
 
-To obtain strong game strategies for the Robot Soccer Kit, we ultimately want to learn control policies with Reinforcement Learning (RL). This typically requires running **thousands to millions of simulated matches** to explore strategies safely and efficiently. However, the current analytical simulator exhibits a **sim-to-real gap**: policies that perform well in simulation often fail to transfer to real RSK robots because the simulated dynamics do not match real-world motion closely enough.
+To obtain strong game strategies for the Robot Soccer Kit, we ultimately want to learn control policies with Reinforcement Learning (RL). This typically requires running **thousands to millions of simulated matches** to explore strategies safely and efficiently. However, the current analytical simulator exhibits a **sim-to-real gap**: policies that perform well in simulation often fail to transfer to real robots because the simulated dynamics do not match real-world motion closely enough.
 
 
 This project addresses that bottleneck by introducing a learning-based (neural) dynamics simulator aimed at reducing the **sim-to-real gap** and enabling practical RL training with reliable real-world transfer.
@@ -89,14 +89,3 @@ https://robot-soccer-kit.github.io/documentation
 | **Confidentiality**| **Public**                                                              |
 | **License**        | Creative Commons Attribution–NonCommercial 2.0 Generic (CC BY-NC 2.0)   |
 | **Authors**        | César LARRAGUETA, Olivier ROUAULT, Antony THIERY                         |
-
-
-<!-- ## Additional advices
-
-* Do not make **passwords** and secret keys public. If you have to, replace it by a random string and a warning in the doc telling to replace it
-* Avoid **long sentences**. Often, bullet points are easier to read
-* **Illustrate** your reports. Use colored plots, schematics and pictures. But do not abuse of them
-* Do not **duplicate** information. If it may be relevant at several places, make links
-* **English** is the universal langage worldwide. Write all engineering documents in English
-* Choose carefully **what sections** apply to your project and delete/add anything from the template that you think relevant
-* Remove anything that would **pollute** reading, including these instructions and irrelevant sections -->
