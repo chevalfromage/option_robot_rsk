@@ -1,67 +1,98 @@
-# Neural Simulation of Robot Soccer Kit Dynamics
+<h1 style="
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+">
+  <img src="assets/img/green1.png" alt="Left logo" width="60"/>
+  <span>Neural Dynamics Simulator for RSK</span>
+  <img src="assets/img/blue1.png" alt="Right logo" width="60"/>
+</h1>
 
-**Description:** This project explores the replacement of an analytical dynamics simulator of the Robot Soccer Kit(https://robot-soccer-kit.github.io/) by a learning-based neural simulator trained from real-world data. The goal is to reduce the sim-to-real gap.
+**Description:** This project explores the replacement of an analytical dynamics simulator of the Robot Soccer Kit (https://robot-soccer-kit.github.io/) by a learning-based neural simulator trained from real-world data. The goal is to reduce the sim-to-real gap.
 
 
-<img src="https://via.placeholder.com/900x300.png?text=Video+illustrating+your+project,+or+picture"> 
+<img src="assets/img/cover.png"> 
 
-[📖 User documentation](docs/user) • [👨‍💻 Developer documentation](docs/developer) • [📈 Project report](docs/report) • [📚 Bibliography](docs/bibliography) • [⚠️ Risk Analysis](docs/risk)
+[User documentation](docs/user) • [Developer documentation](docs/developer) • [Project report](docs/report) • [Bibliography](docs/bibliography) 
   
-## 📄 This project in short
-This paragraph is for the visitors who fly over your work and cannot read the whole documentation. They dislike long texts.
+## This project in short
 
-Be **concise** and **convincing** to show the potential of your project. Be **honest** and list the limitations.  
 
-* The context and the intented users
+* **Context & intented users**
 
-This project is developed in an academic context around the Robot Soccer Kit (RSK) (https://robot-soccer-kit.github.io/), an open robotics platform created by the Rhoban laboratory. It targets students and researchers interested in robotics simulation and sim-to-real approaches.
+This project is developed in an academic context around the Robot Soccer Kit (RSK)
+(https://robot-soccer-kit.github.io/), an open robotics platform created by the
+Rhoban laboratory.
 
-* The problems solved by your project
+It was developed at the request of the Rhoban laboratory for academic and
+research purposes, and targets students and researchers interested in robotics
+simulation and sim-to-real approaches.
 
-The project introduces a learning-based dynamics simulator trained from real robot data, providing a data-driven alternative to purely analytical simulation within the RSK ecosystem.
+* **Motivation**: why this project exists
 
-* How it solves them
+To obtain strong game strategies for the Robot Soccer Kit, we ultimately want to learn control policies with Reinforcement Learning (RL). This typically requires running **thousands to millions of simulated matches** to explore strategies safely and efficiently. However, the current analytical simulator exhibits a **sim-to-real gap**: policies that perform well in simulation often fail to transfer to real RSK robots because the simulated dynamics do not match real-world motion closely enough.
 
-A neural dynamics model is trained from trajectories collected on physical RSK robots using an external vision system, and integrated into the existing simulator pipeline. The approach focuses on learning motion dynamics while preserving compatibility with the original RSK software stack.
 
-Current limitations include unmodeled robot–robot collisions, non-learned ball dynamics.
+This project addresses that bottleneck by introducing a learning-based (neural) dynamics simulator aimed at reducing the **sim-to-real gap** and enabling practical RL training with reliable real-world transfer.
 
-## 🚀 Quickstart (if relevant)
+* **Approach**: how it addresses the sim-to-real gap
 
-* **Install instructions**: List of software/hardware dependencies, and instructions to install them if relevant
-* **Launch instructions**: Few lines of code to launch the main feature of your project
+We train a neural dynamics model directly from real robot trajectories collected on physical RSK robots. The learned model is then integrated into the existing RSK simulation pipeline as a drop-in, data-driven alternative to purely analytical motion simulation, while preserving compatibility with the original RSK software stack.
 
-The following steps allow you to run the Robot Soccer Kit simulator with the neural dynamics model enabled.
+The goal is to provide a simulator in which RL-trained policies are exposed to dynamics closer to reality, improving their chances of being transferred to real robots with minimal additional tuning.
 
+* **Current Limitations**
+
+This project's current version does not provide a complete replacement for the analytical simulator. Robot–robot collisions are not modeled, ball dynamics are not learned. 
+
+These limitations may affect policy transfer in scenarios involving frequent contacts or complex multi-agent interactions.
+
+
+## Quickstart 
+The following steps allow you to install and run the Robot Soccer Kit simulator with the neural dynamics model enabled.
+* **Installation instructions**: 
+
+Setting your virtual environement
 ```bash
 # From the root of the repository
 python -m venv venv
-
+```
+Activate the environement
+```bash
 # Linux / macOS
 source venv/bin/activate
 # Windows
 .\venv\Scripts\Activate.ps1
-
+```
+Install dependecies 
+```bash
 pip install -e src/robot-soccer-kit[gc]
 pip install -e src/rsk-neural-simulator
+```
 
+
+* **Launch instructions**: 
+
+Launch the simulated Robot-Soccer-Kit game controller powered by a pre-trained neural network
+```bash
+# From the root of the repository
 game_controller --simulated
+```
+For more advice about Robot-Soccer-Kit codebase, please refer to the original documentation : 
 
-If this is written in user or dev docs, provide links.
+https://robot-soccer-kit.github.io/documentation
 
-## 🔍 About this project
+## About this project
 
-|       |        |
-|:----------------------------:|:-----------------------------------------------------------------------:|
-| 💼 **Client**                |  Name of your Client *(1)*                                              |
-| 🔒 **Confidentiality**       | **Public** or **Private** *(1)*                                         |
-| ⚖️ **License**               |  [Choose a license](https://choosealicense.com/) *(1)*                  |
-| 👨‍👨‍👦 **Authors**               |  César LARRAGUETA, Olivier ROUAULT, Antony Thiery Student names, with a link to their social media profile or website    |
+| **Client**          | Rhoban (https://www.rhoban.com/fr)                                     |
+|:------------------:|:------------------------------------------------------------------------:|
+| **Confidentiality**| **Public**                                                              |
+| **License**        | Creative Commons Attribution–NonCommercial 2.0 Generic (CC BY-NC 2.0)   |
+| **Authors**        | César LARRAGUETA, Olivier ROUAULT, Antony THIERY                         |
 
 
-*(1) Refer to your client to make a choice. Then update the repository accordingly: the visibility in the settings and replace the [LICENSE](./LICENSE) file.*
-
-## ✔️ Additional advices
+<!-- ## Additional advices
 
 * Do not make **passwords** and secret keys public. If you have to, replace it by a random string and a warning in the doc telling to replace it
 * Avoid **long sentences**. Often, bullet points are easier to read
@@ -69,4 +100,4 @@ If this is written in user or dev docs, provide links.
 * Do not **duplicate** information. If it may be relevant at several places, make links
 * **English** is the universal langage worldwide. Write all engineering documents in English
 * Choose carefully **what sections** apply to your project and delete/add anything from the template that you think relevant
-* Remove anything that would **pollute** reading, including these instructions and irrelevant sections
+* Remove anything that would **pollute** reading, including these instructions and irrelevant sections -->
