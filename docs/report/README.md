@@ -20,12 +20,20 @@ For the integration phase, we modified the original [simulator](/src/robot-socce
 
 ## Analysis of results
 
-![Texte alternatif](/assets/img/loss_exemple.png)
+To evaluate the efficiency of our approach, we mainly analyzed the evolution of the training loss. The loss curve shows a clear global decrease during training, which indicates that the model is learning the relationship between the robot state, the control commands, and the resulting speed.
 
+However, the convergence is not perfectly smooth and some oscillations can be observed. This suggests that the model still has difficulties generalizing to all situations, in particular for abrupt changes of commands or high-speed motions. The final loss value remains higher than expected, which means that the prediction accuracy is not yet sufficient to fully replace a precise physical model.
 
-* **User tests**: Setup a methodology to test the efficiency of your project against users. It may use pre-experiment and post-experiment questionnaires. The most users the better to draw meaningful conclusions from your experiments. Radar diagrams are good to summarize such results.
-* **Table of data**: Provide (short) extracts of data and relevant statistics (distribution, mean, standard deviation, p-values...)
-* **Plots**: Most data are more demonstrative when represented as plots. 
+During training, we monitored both the training loss and the validation loss. When the validation loss started to diverge from the training loss, this indicated the beginning of overfitting. At this point, the training was stopped in order to keep a model that generalizes better to unseen data rather than one that only fits the training set.
 
-Draw conclusions, **interpret** the results and make recommandations to your client for your future of the work.
-It is totally fine to have results that are not as good as initially expected. Be honest and analyse why you did not manage to reach the objectives.
+![Training exemple](/assets/img/loss_exemple.png)
+
+To better understand the behavior of the model, the total loss was also decomposed into its different components (for instance, errors on each velocity axis). This component-wise analysis allows us to identify which parts of the motion are well predicted and which remain more problematic, and therefore provides a more detailed insight into the limitations of the current model. In our case the erros is mainly in the position insted of the angle.
+
+![Training exemple](/assets/img/loss_component.png)
+
+Once the model was trained, it was integrated into the simulator. The following figure shows a comparison between the actual robot motion and the motion predicted by the model, for each axis.
+
+![Training exemple](/assets/img/actual_speed_MLP.jpg)
+
+For now the predictions are fairly close, but the model tends to smooth out the motions, underestimating sharp changes or abrupt variations.
