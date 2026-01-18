@@ -56,7 +56,7 @@ If this is written in user or dev docs, provide links.
 | 💼 **Client**                |  Name of your Client *(1)*                                              |
 | 🔒 **Confidentiality**       | **Public** or **Private** *(1)*                                         |
 | ⚖️ **License**               |  [Choose a license](https://choosealicense.com/) *(1)*                  |
-| 👨‍👨‍👦 **Authors**               |  César LARRAGUETAStudent names, with a link to their social media profile or website    |
+| 👨‍👨‍👦 **Authors**               |  César LARRAGUETA, Olivier ROUAULT, Antony Thiery Student names, with a link to their social media profile or website    |
 
 
 *(1) Refer to your client to make a choice. Then update the repository accordingly: the visibility in the settings and replace the [LICENSE](./LICENSE) file.*
