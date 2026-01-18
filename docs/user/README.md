@@ -1,16 +1,49 @@
 # 📖 User documentation
 
-## ⁉️ Purpose of this documentation
+## Purpose
 
-This documentation is intended to the **end users** of your work.
-They are usually engineering-agnostic and are not able to understand mecatronics or software engineering.
-Imagine that you are giving instructions to your little bro. 
+This documentation is intended for users who want to **run the Robot Soccer Kit simulator with neural dynamics enabled**, without modifying the codebase.
 
-## ⁉️ Do we really need to feed this section? 
+It targets students and researchers who use the simulator as a tool (e.g. for control or reinforcement learning), not developers extending the neural models.
 
-Maybe not, if your project does not target end users. Drop the section and the links if you feel that it is not relevant.
+For technical details, refer to the
+[Developer documentation](../developer).
 
-## ⁉️ What is expected here
+---
 
-The user documentation must explain how to **start** your project and how to use each feature, most of the time without technical terms.
-Inspire from the User Manual of your washing machine. Add screenshots and pictures when relevant for your end users.
+## What does this project provide?
+
+A version of the Robot Soccer Kit simulator where **robot motion dynamics are driven by a neural model trained from real-world data**, instead of a purely analytical model.
+
+From a user perspective:
+- The standard RSK simulator is used
+- Dynamics are closer to real robot behavior
+- No changes to existing strategies or control code are required
+
+---
+
+## Getting started
+
+Installation and launch instructions are provided in the **Quickstart section of the main README**:
+
+➡️ [`README.md` at the repository root](../../README.md)
+
+---
+
+## Running a simulation
+
+Once installed, run:
+
+```bash
+game_controller --simulated
+```
+
+If a trained neural model is available, it is automatically used by the simulator.
+
+---
+
+## Known limitations
+
+* Ball dynamics are not learned
+* Robot–robot collisions are not learned
+* Performance depends on the training data coverage
