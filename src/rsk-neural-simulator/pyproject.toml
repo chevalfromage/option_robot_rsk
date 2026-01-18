@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rsk_neural_simulator"
+version = "0.1.0"
+description = "Neural simulator and learning-based dynamics models for Robot Soccer Kit"
+readme = "README.md"
+requires-python = ">=3.9"
+
+dependencies = [
+    # Core numerical & ML stack
+    "numpy>=2.2",
+    "torch>=2.0",
+    "scipy>=1.15",
+    "scikit-learn>=1.7",
+    "pandas>=2.3",
+    "joblib>=1.5",
+
+    # Visualisation & analysis
+    "matplotlib>=3.10",
+
+    # Math / graph utilities (used in your codebase)
+    "networkx>=3.4",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["rsk_neural_simulator*"]
+
+[tool.setuptools]
+include-package-data = false

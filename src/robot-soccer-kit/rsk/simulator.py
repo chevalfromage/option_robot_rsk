@@ -11,25 +11,23 @@ from pathlib import Path
 import sys
 import os
 
-from rsk_neural_simulator.data.preparation_datas import MEMORY_WINDOW
 from collections import deque
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-if str(PROJECT_ROOT) not in sys.path:
-    # Ensure sibling packages (e.g., rsk_neural_simulator) are importable
-    sys.path.append(str(PROJECT_ROOT))
-    
+import torch
+import joblib
+import warnings
 
-TRAINED_MODEL_DIR = PROJECT_ROOT / "rsk_neural_simulator" / "model" / "trained_model"
+from rsk_neural_simulator.data.preparation_datas import MEMORY_WINDOW
+from rsk_neural_simulator.model.SimpleNN import SimpleNN, SimpleNN3, SimpleNNMemory
+import rsk_neural_simulator
+
+# Resolve model artifacts path from the installed neural package
+NEURAL_ROOT = Path(rsk_neural_simulator.__file__).resolve().parent
+TRAINED_MODEL_DIR = NEURAL_ROOT / "model" / "trained_model"
+
 MODEL_PATH = TRAINED_MODEL_DIR / "simple_nn_memory.pth"
 X_SCALER_PATH = TRAINED_MODEL_DIR / "x_scaler_memory.pkl"
 Y_SCALER_PATH = TRAINED_MODEL_DIR / "y_scaler_memory.pkl"
-
-import torch
-from rsk_neural_simulator.model.SimpleNN import SimpleNN, SimpleNN3, SimpleNNMemory
-
-import joblib
-import warnings
 
 
 # Constantes pour savoir quels robots faire spawn et ou 
