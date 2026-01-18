@@ -37,11 +37,11 @@ rsk_neural_simulator/
 
 - **`data/`**  
   Data acquisition, visualization, and preprocessing pipeline.  
-  See: [`data/README.md`](../src/rsk-neural-simulator/rsk_neural_simulator/data)
+  See: [data documentation](../../src/rsk-neural-simulator/rsk_neural_simulator/data/README.md)
 
 - **`model/`**  
   Neural network definitions and training scripts.  
-  See: [`model/README.md`](../src/rsk-neural-simulator/rsk_neural_simulator/model)
+  See: [model documentation](../../src/rsk-neural-simulator/rsk_neural_simulator/model/README.md)
 
 - **`evaluate/`**  
   Evaluation scripts and analysis utilities (offline, not used at runtime).
@@ -55,9 +55,9 @@ The neural model is used inside the RSK simulator as an alternative **velocity u
 Key integration points:
 - Neural models are loaded in `rsk/simulator.py`
 - Model selection is controlled via a single configuration flag:
-
+```python
   ROBOT_VELOCITY_MODEL = "original" | "mlp" | "trig" | "history"
-
+```
 * The simulator expects specific artifact filenames (model weights and scalers)
 
 This design allows switching between analytical and neural dynamics without changing higher-level control or strategy code.
