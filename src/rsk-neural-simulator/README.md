@@ -48,7 +48,7 @@ This script:
 
 ```bash
 rsk_neural_simulator/model/trained_model/
-````
+```
 
 * `simple_nn_memory.pth`
 * `x_scaler_memory.pkl`

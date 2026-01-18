@@ -142,8 +142,19 @@ class SimulatedRobot(SimulatedObject):
             )
 
         self.model = SimpleNNMemory()
-        self.model.load_state_dict(torch.load(MODEL_PATH))
+        # select device: prefer MPS (Apple Silicon), then CUDA, otherwise CPU
+        if getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available() and torch.backends.mps.is_built():
+            device = torch.device("mps")
+        elif torch.cuda.is_available():
+            device = torch.device("cuda")
+        else:
+            device = torch.device("cpu")
+
+        state_dict = torch.load(MODEL_PATH, map_location=device)
+        self.model.load_state_dict(state_dict)
+        self.model.to(device)
         self.model.eval()
+        self.device = device
         self.x_scaler = joblib.load(X_SCALER_PATH)
         self.y_scaler = joblib.load(Y_SCALER_PATH)
 
@@ -210,7 +221,7 @@ class SimulatedRobot(SimulatedObject):
 
         x_input = np.concatenate([target_velocity_robot, velocity_robot]).reshape(1, -1)
         x_scaled = self.x_scaler.transform(x_input)
-        x_tensor = torch.tensor(x_scaled, dtype=torch.float32)
+        x_tensor = torch.tensor(x_scaled, dtype=torch.float32, device=self.device)
         with torch.no_grad():
             y_scaled = self.model(x_tensor)
         y_scaled = y_scaled.cpu().numpy()
@@ -260,7 +271,7 @@ class SimulatedRobot(SimulatedObject):
         ).reshape(1, -1)
 
         x_scaled = self.x_scaler.transform(nn_input)
-        x_tensor = torch.tensor(x_scaled, dtype=torch.float32)
+        x_tensor = torch.tensor(x_scaled, dtype=torch.float32, device=self.device)
         with torch.no_grad():
             y_scaled = self.model(x_tensor)
         prediction = self.y_scaler.inverse_transform(y_scaled.cpu().numpy())[0]
@@ -320,7 +331,7 @@ class SimulatedRobot(SimulatedObject):
         ).reshape(1, -1)
 
         x_scaled = self.x_scaler.transform(nn_input)
-        x_tensor = torch.tensor(x_scaled, dtype=torch.float32)
+        x_tensor = torch.tensor(x_scaled, dtype=torch.float32, device=self.device)
         with torch.no_grad():
             y_scaled = self.model(x_tensor)
         prediction = self.y_scaler.inverse_transform(y_scaled.cpu().numpy())[0]
