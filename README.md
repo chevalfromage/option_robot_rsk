@@ -24,7 +24,7 @@
 This project is developed in an academic context around the [Robot Soccer Kit (RSK)](https://robot-soccer-kit.github.io/), an open robotics platform created by the
 Rhoban laboratory.
 
-It was developed at the request of the Rhoban laboratory for academic and
+It was developed at the request of the [Rhoban laboratory](https://www.rhoban.com/fr) for academic and
 research purposes, and targets students and researchers interested in robotics
 simulation and sim-to-real approaches.
 
