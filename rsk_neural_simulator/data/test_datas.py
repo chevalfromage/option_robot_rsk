@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import FancyArrowPatch
 import keyboard
 import sys
 
@@ -21,7 +22,9 @@ x = 0
 y = 0
 fig, ax = plt.subplots()
 points = ax.scatter(x, y)
+fleche = FancyArrowPatch(posA=(0,0), posB=(1,2), arrowstyle='->')
 ax.set(xlim=(-2, 2), ylim=(-2, 2))
+ax.add_patch(fleche)
 plt.show(block=False)
 
 def exit():
@@ -32,9 +35,14 @@ def plot_data(data):
     global init_graph
     global points
 
-    new_x = data["history"][0]["x"]
-    new_y = data["history"][0]["y"]
+    new_x = [data["history"][0]["x"] , data["history"][9]["x"]]
+    new_y = [data["history"][0]["y"] , data["history"][9]["y"]]
+
+    new_dx = data["history"][0]["dx"]
+    new_dy = data["history"][0]["dy"]
+
     points.set_offsets(np.c_[new_x, new_y])
+    fleche.set_positions((new_x[0],new_y[0]), (new_dx, new_dy))
     fig.canvas.draw()
     fig.canvas.flush_events()
 
@@ -48,14 +56,16 @@ def show_datas(datas_fichier_in):
     with open(datas_fichier_in, 'r', encoding='utf-8') as fichier:
         datas = json.load(fichier)
 
-
-    #Supprimer données sans rafraîchissement de la cam
-    for instant in range(len(datas)):
-        print(datas[instant])
+    instant = 0
+    while instant <= len(datas):
         plot_data(datas[instant])
         
-        keyboard.wait('right')
+        key = keyboard.read_key()
 
+        if key == 'droite':
+            instant +=1
+        elif key == 'gauche':
+            instant -= 1
 
 if __name__ == "__main__":
 
