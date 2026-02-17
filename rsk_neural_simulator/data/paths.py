@@ -105,7 +105,6 @@ class WaypointPath(BasePath):
         target_arr = np.array(self.waypoints[self._index])
         pos_error = np.linalg.norm(pose_arr[:2] - target_arr[:2])
         theta_error = abs(wrap_angle(pose_arr[2] - target_arr[2]))
-
         if pos_error <= self.tolerance and theta_error <= self.theta_tolerance:
             if self._index == len(self.waypoints) - 1:
                 self._finished = True

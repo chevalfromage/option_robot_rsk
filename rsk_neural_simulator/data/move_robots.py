@@ -24,7 +24,7 @@ ROBOT_MAP = {
 }
 PARKING_POSES = {
     "g1": (0.2, rsk_constants.field_width / 2 - 20, -math.pi / 2),
-    "g2": (0.6, rsk_constants.field_width / 2 - 20, -math.pi / 2),
+    "g2": (0.6, rsk_constants.field_width / 2 - 20, -math.pi / 2),  
     "b1": (-0.2, rsk_constants.field_width / 2 - 20, -math.pi / 2),
     "b2": (-0.6, rsk_constants.field_width / 2 - 20, -math.pi / 2),
 }
@@ -52,6 +52,7 @@ def record_paths_for_robot(client: rsk.Client, robot_key: str) -> None:
 
         while True:
             target_pose = path.current_target()
+            print(f"target_pose : {target_pose}")
             _, orders = robot.goto_compute_order(target_pose)
             robot.control(*orders)
 
@@ -69,7 +70,6 @@ def record_paths_for_robot(client: rsk.Client, robot_key: str) -> None:
                     "orders": {"dx": orders[0], "dy": orders[1], "dtheta": orders[2]},
                 }
             )
-
             finished = path.update(robot.pose)
 
             if finished:

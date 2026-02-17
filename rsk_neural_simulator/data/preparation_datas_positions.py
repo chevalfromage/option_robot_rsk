@@ -19,7 +19,7 @@ THETA_SMOOTH_WINDOW = 15
 POSITION_SMOOTH_WINDOW = 10
 
 # nombre d'instants precedents (en plus du current dt) à utiliser pour la prédiction
-MEMORY_WINDOW = 5
+MEMORY_WINDOW = 2
 
 # tentative d'arrondir tout au cm pour eviter les mouvbements brownien dans le simu
 def round_values(value, ndigits=3):
@@ -102,7 +102,7 @@ def cleaner_data(datas_fichier_in):
     datas_out = []
 
     #Supprimer données sans rafraîchissement de la cam
-    for instant in range(1, len(datas)):
+    for instant in range(len(datas)):
         pos_prev = datas[instant-1]["robot_pose"]
         pos = datas[instant]["robot_pose"]
 
@@ -112,90 +112,48 @@ def cleaner_data(datas_fichier_in):
 
     theta_series_raw = [entry["robot_pose"]["theta"] for entry in datas_out]
     #passage de x et y dans le repère robot
-    x_series_raw = [entry["robot_pose"]["x"]*np.cos(entry["robot_pose"]["theta"])+entry["robot_pose"]["y"]*np.sin(np.cos(entry["robot_pose"]["theta"]))  for entry in datas_out]
-    y_series_raw = [entry["robot_pose"]["y"]*np.cos(entry["robot_pose"]["theta"])-entry["robot_pose"]["x"]*np.sin(np.cos(entry["robot_pose"]["theta"])) for entry in datas_out]
-    theta_series = smooth_series(theta_series_raw, THETA_SMOOTH_WINDOW, circular=True) # inutile ?
-    x_series = smooth_series(x_series_raw, POSITION_SMOOTH_WINDOW) # inutile ?
-    y_series = smooth_series(y_series_raw, POSITION_SMOOTH_WINDOW) # inutile ?
+    x_series_raw = [entry["robot_pose"]["x"] for entry in datas_out]
+    y_series_raw = [entry["robot_pose"]["y"] for entry in datas_out]
+    # theta_series = smooth_series(theta_series_raw, THETA_SMOOTH_WINDOW, circular=True) # inutile ?
+    # x_series = smooth_series(x_series_raw, POSITION_SMOOTH_WINDOW) # inutile ?
+    # y_series = smooth_series(y_series_raw, POSITION_SMOOTH_WINDOW) # inutile ?
+    theta_series = theta_series_raw
+    x_series = x_series_raw
+    y_series = y_series_raw
     theta_times = [entry["timestamp"] for entry in datas_out]
+
+    orders = [entry["orders"] for entry in datas_out]
+    positions = [entry["robot_pose"] for entry in datas_out]
+
 
     for i in range(len(datas_out)):
         datas_out[i]["robot_pose"]["x"] = x_series[i]
         datas_out[i]["robot_pose"]["y"] = y_series[i]
         datas_out[i]["robot_pose"]["theta"] = theta_series[i]
 
-    # Calculer dérivée de x, y et cos/sin theta 
-    for instant in range(1, len(datas_out)):
-        pos_prev = datas_out[instant-1]["robot_pose"]
+    zero = {"x": 0.0, "y": 0.0, "theta": 0.0, "dx": 0.0, "dy": 0.0, "dtheta": 0.0}
+
+    for instant in range( len(datas_out)):
         pos = datas_out[instant]["robot_pose"]
         dt = datas_out[instant]["timestamp"] - datas_out[instant-1]["timestamp"]
-        # print(f"dt : {dt}")
         dt = 0.033
 
-        cos_theta = np.cos(pos["theta"])
-        sin_theta = np.sin(pos["theta"])
-
-        derivee_x = (pos["x"] - pos_prev["x"]) / dt
-        derivee_y = (pos["y"] - pos_prev["y"]) / dt
-
-        derivee_x_robot = cos_theta*derivee_x + sin_theta*derivee_y
-        derivee_y_robot = cos_theta*derivee_y - sin_theta*derivee_x
-
-        derivee_theta_cos = float(cos_theta-np.cos(pos_prev["theta"]))/dt
-        derivee_theta_sin = float(sin_theta-np.sin(pos_prev["theta"]))/dt
-
-        derivee = {
-            "x": derivee_x_robot,
-            "y": derivee_y_robot,
-            "theta_cos": derivee_theta_cos,
-            "theta_sin": derivee_theta_sin,
-        }
-
-        datas_out[instant]["derivee"] = derivee
-
-    # Valeurs à t+dt
-    for instant in range(1, len(datas_out) - 1):
-        datas_out[instant]["derivee_next"] = dict(datas_out[instant + 1]["derivee"])
-
-    # Historique des dérivées (t-1, t-2, ..., t-MEMORY_WINDOW)
-    # On crée pour chaque instant un champ `derivee_history` contenant une liste
-    # de dictionnaires, l'entrée 0 correspondant à t-1, entrée 1 à t-2, etc.
-    
-    # on ajoute un historique des dérivées précédentes pour le modèle
-    # sur une fenetre de mémoire de taille MEMORY_WINDOW
-    # s'il manque les instants précédents, on remplit avec des zéros
-    zero_derivee = {"x": 0.0, "y": 0.0, "theta_cos": 0.0, "theta_sin": 0.0}
-    for instant in range(len(datas_out)):
         history = []
-        for k in range(1, MEMORY_WINDOW + 1):
+        for k in range(MEMORY_WINDOW):
             idx = instant - k
             if idx >= 0:
-                history.append(dict(datas_out[idx].get("derivee", zero_derivee)))
+                history.append(dict({**positions[idx], **orders[idx]}))
             else:
-                history.append(dict(zero_derivee))
-        datas_out[instant]["derivee_history"] = history
+                history.append(dict(zero))
+        datas_out[instant]["history"] = history
 
     # Nettoyage des clés
-    keys_to_remove = ["ball_position", "robot_pose"]
+    keys_to_remove = ["ball_position", "robot_pose", "orders"]
     for d in datas_out:
         for k in keys_to_remove:
             d.pop(k, None)
 
     dataset_name = datas_fichier_out.stem
-    plot_smoothing_debug(
-        theta_times,
-        x_series_raw,
-        x_series,
-        y_series_raw,
-        y_series,
-        theta_series_raw,
-        theta_series,
-        dataset_name,
-    )
-
-    # Suppression des valeurs extremes au cas où
-    datas_out.pop(0)
-    datas_out.pop(-1)
 
     datas_out = [round_values(entry) for entry in datas_out]
 
@@ -207,6 +165,6 @@ def cleaner_data(datas_fichier_in):
 
 if __name__ == "__main__":
 
-    for json_file in RAW_ROOT.rglob("*.json"):
+    for json_file in RAW_ROOT.rglob("cross.json"):
         print(f"Traitement : {json_file}")
         cleaner_data(json_file)

@@ -17,9 +17,9 @@ from rsk_neural_simulator.data.preparation_datas import MEMORY_WINDOW
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 base_path = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "data", "clean"))
 TRAINED_MODEL_DIR = os.path.join(SCRIPT_DIR, "trained_model")
-TRAINED_MODEL_NAME = "simple_nn_memory.pth"
-SCALER_X_NAME = "x_scaler_memory.pkl"
-SCALER_Y_NAME = "y_scaler_memory.pkl"
+TRAINED_MODEL_NAME = "simple_nn_test_anto.pth"
+SCALER_X_NAME = "x_scaler_test_anto.pkl"
+SCALER_Y_NAME = "y_scaler_test_anto.pkl"
 
 all_dfs = []
 

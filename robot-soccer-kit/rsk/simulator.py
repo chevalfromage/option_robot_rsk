@@ -21,9 +21,9 @@ if str(PROJECT_ROOT) not in sys.path:
     
 
 TRAINED_MODEL_DIR = PROJECT_ROOT / "rsk_neural_simulator" / "model" / "trained_model"
-MODEL_PATH = TRAINED_MODEL_DIR / "simple_nn_memory.pth"
-X_SCALER_PATH = TRAINED_MODEL_DIR / "x_scaler_memory.pkl"
-Y_SCALER_PATH = TRAINED_MODEL_DIR / "y_scaler_memory.pkl"
+MODEL_PATH = TRAINED_MODEL_DIR / "simple_nn_test_anto.pth"
+X_SCALER_PATH = TRAINED_MODEL_DIR / "x_scaler_test_anto.pkl"
+Y_SCALER_PATH = TRAINED_MODEL_DIR / "y_scaler_test_anto.pkl"
 
 import torch
 from rsk_neural_simulator.model.SimpleNN import SimpleNN, SimpleNN3, SimpleNNMemory
@@ -302,9 +302,11 @@ class SimulatedRobot(SimulatedObject):
         velocity_world = self.velocity[:2]
         velocity_robot = R_robot_world.T @ velocity_world  # world -> robot
 
-        theta = float(self.position[2])
-        cos_theta = float(np.cos(theta))
-        sin_theta = float(np.sin(theta))
+        print(f"self.velocity: {self.velocity}")
+
+        vtheta = float(self.velocity[2])
+        vcos_theta = float(np.cos(vtheta))
+        vsin_theta = float(np.sin(vtheta))
          
         history_flat = np.concatenate(list(self.velocity_history))
 
@@ -315,8 +317,8 @@ class SimulatedRobot(SimulatedObject):
                 target_velocity_robot[2],
                 velocity_robot[0],
                 velocity_robot[1],
-                cos_theta,
-                sin_theta,
+                vcos_theta,
+                vsin_theta,
                 *history_flat
             ]
         ).reshape(1, -1)
@@ -327,7 +329,9 @@ class SimulatedRobot(SimulatedObject):
             y_scaled = self.model(x_tensor)
         prediction = self.y_scaler.inverse_transform(y_scaled.cpu().numpy())[0]
 
-        vx_robot_next, vy_robot_next, cos_next, sin_next = prediction
+        vx_robot_next, vy_robot_next, vcos_next, vsin_next = prediction
+
+        print(f"target_velocity_robot : {target_velocity_robot}, velocity_robot : {velocity_robot} ,  prediction : {prediction}")
         
         """ 
         # Normalise cos/sin in case of slight drift
@@ -338,18 +342,23 @@ class SimulatedRobot(SimulatedObject):
         cos_next /= norm
         sin_next /= norm  """
 
-        theta_next = float(np.arctan2(sin_next, cos_next))
-        dtheta = np.arctan2(np.sin(theta_next - theta), np.cos(theta_next - theta))
-        omega_next = dtheta / dt
+        vtheta_next = float(np.arctan2(vsin_next, vcos_next))
+        # dtheta = np.arctan2(np.sin(theta_next - theta), np.cos(theta_next - theta))
+        # omega_next = dtheta / dt
+
+        cos_next = np.cos(self.position[2]) + vcos_next*dt
+        sin_next = np.sin(self.position[2]) + vsin_next*dt
 
         R_next = np.array([[cos_next, -sin_next], [sin_next, cos_next]])
         velocity_world_next = R_next @ np.array([vx_robot_next, vy_robot_next])
 
         self.velocity[:2] = velocity_world_next
-        self.velocity[2] = omega_next
+        self.velocity[2] = vtheta_next
+
+        print(f"new self.velocity : {self.velocity}")
 
         # mise à jour de l'historique glissant
-        combined = np.array([velocity_robot[0], velocity_robot[1], cos_theta, sin_theta])
+        combined = np.array([velocity_robot[0], velocity_robot[1], vcos_theta, vsin_theta])
         self.velocity_history.appendleft(combined) 
 
 
@@ -407,7 +416,7 @@ class RobotSim(robot.Robot):
         order_robot_xy = R_robot_world.T @ order_world
 
         order_robot = np.array([order_robot_xy[0], order_robot_xy[1], float(dturn)], dtype=float)
-        self.object.control_cmd = kinematics.clip_target_order(order_robot)
+        self.object.control_cmd = kinematics.clip_target_order(order_robot) #order_robot
 
     def control(self, dx: float, dy: float, dturn: float) -> None:
         """Pareil que pour update_velocity, choisit la méthode control selon ROBOT_VELOCITY_MODEL."""
@@ -416,7 +425,7 @@ class RobotSim(robot.Robot):
         elif ROBOT_VELOCITY_MODEL == "mlp":
             self._control_mlp(dx, dy, dturn)
         elif ROBOT_VELOCITY_MODEL == "history":
-            self._control_nn(dx, dy, dturn)
+            self._control_mlp(dx, dy, dturn)
         elif ROBOT_VELOCITY_MODEL == "original":
             self._control_original(dx, dy, dturn)
         else:
