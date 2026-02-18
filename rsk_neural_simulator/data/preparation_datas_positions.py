@@ -1,11 +1,13 @@
 """Ce fichier sert à préparer les données pour l'entraînement du modèle. (dérivées, lissage, etc...)"""
 
+"""Les orders sont dans le repère robot. Les positions du robot dans le repère monde. On passe donc les orders dans le repère monde pour history_W et les positions dans le repère robot pour history_R"""
 
 import json
 import os
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 RAW_ROOT = SCRIPT_DIR / "raw"
@@ -89,6 +91,37 @@ def plot_smoothing_debug(times, raw_x, smooth_x, raw_y, smooth_y, raw_theta, smo
     plt.close(fig)
     print(f"Plot smoothing combiné sauvegardé: {out_path}")
 
+def passage_repere_robot(history_W):
+    history_R = []
+        
+    new_x_W = [history_W[k]["x"] for k in range(len(history_W))]
+    new_y_W = [history_W[k]["y"] for k in range(len(history_W))]
+    new_x_step = [new_x_W[k] - new_x_W[0] for k in range(len(new_x_W))] #juste pour le calcul
+    new_y_step = [new_y_W[k] - new_y_W[0] for k in range(len(new_y_W))] #juste pour le calcul
+    new_theta_W = [history_W[k]["theta"] for k in range(len(history_W))]
+    new_x_R = [new_x_step[k]*np.cos(new_theta_W[0]) + new_y_step[k]*np.sin(new_theta_W[0]) for k in range(len(new_x_W))]
+    new_y_R = [new_x_step[k]*-np.sin(new_theta_W[0]) + new_y_step[k]*np.cos(new_theta_W[0]) for k in range(len(new_x_W))]
+    new_theta_R = [new_theta_W[k] - new_theta_W[0] for k in range(len(new_theta_W))]
+
+    new_dx_R = [history_W[k]["dx"]/1.5 for k in range(len(history_W))]
+    new_dy_R = [history_W[k]["dy"]/1.5 for k in range(len(history_W))]
+    new_dtheta_R = [history_W[0]["dtheta"]/1.5 for k in range(len(history_W))]
+    
+    history_R = [{"x": new_x_R[k], "y": new_y_R[k], "theta": new_theta_R[k], "dx": new_dx_R[k], "dy": new_dy_R[k], "dtheta": new_dtheta_R[k]} for k in range(len(new_x_R))]
+    return history_R
+
+def passage_repere_monde(history_W):
+
+    new_x_W = [history_W[k]["x"] for k in range(len(history_W))]
+    new_y_W = [history_W[k]["y"] for k in range(len(history_W))]
+    new_theta_W = [history_W[k]["theta"] for k in range(len(history_W))]
+
+    new_dx_W = [(np.cos(new_theta_W[0])*history_W[k]["dx"] - np.sin(new_theta_W[0])*history_W[k]["dy"])/1.5 + new_x_W[0] for k in range(len(history_W))] #/1.5 pour la visualisation
+    new_dy_W = [(np.sin(new_theta_W[0])*history_W[k]["dx"] + np.cos(new_theta_W[0])*history_W[k]["dy"])/1.5 + new_y_W[0] for k in range(len(history_W))] #/1.5 pour la visualisation
+    new_dtheta_W = [(new_theta_W[k] + history_W[k]["dtheta"])/1.5 for k in range(len(history_W))]
+
+    history_W = [{"x": new_x_W[k], "y": new_y_W[k], "theta": new_theta_W[k], "dx": new_dx_W[k], "dy": new_dy_W[k], "dtheta": new_dtheta_W[k]} for k in range(len(new_x_W))]
+    return history_W
 
 def cleaner_data(datas_fichier_in):
 
@@ -146,6 +179,13 @@ def cleaner_data(datas_fichier_in):
             else:
                 history_W.append(dict(zero))
         datas_out[instant]["history_W"] = history_W
+
+    for instant in range(len(datas_out)): #création de history_W
+        datas_out[instant]["history_R"] = passage_repere_robot(datas_out[instant]["history_W"])
+    
+    for instant in range(len(datas_out)): #passage des orders dans le repère monde
+        datas_out[instant]["history_W"] = passage_repere_monde(datas_out[instant]["history_W"])
+    
 
     # Nettoyage des clés
     keys_to_remove = ["ball_position", "robot_pose", "orders"]

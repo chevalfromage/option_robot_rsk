@@ -51,7 +51,7 @@ plt.show(block=False)
 def exit():
     keyboard.unhook_all()
     sys.exit()
-    
+
 def plot_data_terrain(data):
     global init_graph
     global points
@@ -60,10 +60,8 @@ def plot_data_terrain(data):
     new_y_W = [data["history_W"][k]["y"] for k in range(len(data["history_W"]))]
     new_theta_W = [data["history_W"][k]["theta"] for k in range(len(data["history_W"]))]
 
-    new_dx_R = data["history_W"][0]["dx"] 
-    new_dy_R = data["history_W"][0]["dy"] 
-    new_dx_W = (np.cos(new_theta_W[0])*new_dx_R - np.sin(new_theta_W[0])*new_dy_R)/1.5 + new_x_W[0] #/1.5 pour la visualisation
-    new_dy_W = (np.sin(new_theta_W[0])*new_dx_R + np.cos(new_theta_W[0])*new_dy_R)/1.5 + new_y_W[0] #/1.5 pour la visualisation
+    new_dx_W = data["history_W"][0]["dx"] 
+    new_dy_W = data["history_W"][0]["dy"] 
 
     pointsW.set_offsets(np.c_[new_x_W, new_y_W])
     flecheW.set_positions((new_x_W[0],new_y_W[0]), (new_dx_W, new_dy_W)) 
@@ -74,17 +72,12 @@ def plot_data_robot(data):
     global init_graph
     global points
 
-    new_x_W = [data["history_W"][k]["x"] for k in range(len(data["history_W"]))]
-    new_y_W = [data["history_W"][k]["y"] for k in range(len(data["history_W"]))]
-    new_x_step = [new_x_W[k] - new_x_W[0] for k in range(len(new_x_W))] #juste pour le calcul
-    new_y_step = [new_y_W[k] - new_y_W[0] for k in range(len(new_y_W))] #juste pour le calcul
-    new_theta_W = [data["history_W"][k]["theta"] for k in range(len(data["history_W"]))]
-    new_x_R = [new_x_step[k]*np.cos(new_theta_W[0]) + new_y_step[k]*np.sin(new_theta_W[0]) for k in range(len(new_x_W))]
-    new_y_R = [new_x_step[k]*-np.sin(new_theta_W[0]) + new_y_step[k]*np.cos(new_theta_W[0]) for k in range(len(new_x_W))]
-    new_theta_R = [new_theta_W[k] - new_theta_W[0] for k in range(len(new_theta_W))]
+    new_x_R = [data["history_R"][k]["x"] for k in range(len(data["history_R"]))]
+    new_y_R = [data["history_R"][k]["y"] for k in range(len(data["history_R"]))]
+    new_theta_R = [data["history_R"][k]["theta"] for k in range(len(data["history_R"]))]
 
-    new_dx_R = data["history_W"][0]["dx"]/1.5
-    new_dy_R = data["history_W"][0]["dy"]/1.5
+    new_dx_R = data["history_R"][0]["dx"]
+    new_dy_R = data["history_R"][0]["dy"]
     
     pointsR.set_offsets(np.c_[new_x_R, new_y_R])
     flecheR.set_positions((new_x_R[0],new_y_R[0]), (new_dx_R, new_dy_R)) #/1.5 pour la visualisation
