@@ -19,7 +19,7 @@ THETA_SMOOTH_WINDOW = 15
 POSITION_SMOOTH_WINDOW = 10
 
 # nombre d'instants precedents (en plus du current dt) à utiliser pour la prédiction
-MEMORY_WINDOW = 2
+MEMORY_WINDOW = 10
 
 # tentative d'arrondir tout au cm pour eviter les mouvbements brownien dans le simu
 def round_values(value, ndigits=3):
@@ -133,19 +133,19 @@ def cleaner_data(datas_fichier_in):
 
     zero = {"x": 0.0, "y": 0.0, "theta": 0.0, "dx": 0.0, "dy": 0.0, "dtheta": 0.0}
 
-    for instant in range( len(datas_out)):
+    for instant in range(len(datas_out)):
         pos = datas_out[instant]["robot_pose"]
         dt = datas_out[instant]["timestamp"] - datas_out[instant-1]["timestamp"]
         dt = 0.033
 
-        history = []
+        history_W = []
         for k in range(MEMORY_WINDOW):
             idx = instant - k
             if idx >= 0:
-                history.append(dict({**positions[idx], **orders[idx]}))
+                history_W.append(dict({**positions[idx], **orders[idx]}))
             else:
-                history.append(dict(zero))
-        datas_out[instant]["history"] = history
+                history_W.append(dict(zero))
+        datas_out[instant]["history_W"] = history_W
 
     # Nettoyage des clés
     keys_to_remove = ["ball_position", "robot_pose", "orders"]
