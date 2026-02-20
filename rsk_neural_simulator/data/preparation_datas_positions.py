@@ -204,6 +204,7 @@ def cleaner_data(datas_fichier_in):
 
 
 if __name__ == "__main__":
+    print("coucou")
 
     for json_file in RAW_ROOT.rglob("cross.json"):
         print(f"Traitement : {json_file}")

@@ -33,14 +33,16 @@ y_pathW = [path_cross[k][1] for k in range(len(path_cross))]
 
 fig, ax = plt.subplots(1,2)
 ax[0].set_aspect('equal', adjustable='box')
-pointsW = ax[0].scatter(0, 0)
+pointsW = ax[0].scatter(0, 0, color='orange')
+futur_pointsW = ax[0].scatter(0, 0, color='red')
 pathW = ax[0].scatter(x_pathW, y_pathW)
 flecheW = FancyArrowPatch(posA=(0,0), posB=(1,2), arrowstyle='->')
 ax[0].set(xlim=(-1.5, 1.5), ylim=(-1.5, 1.5))
 ax[0].add_patch(flecheW)
 
 ax[1].set_aspect('equal', adjustable='box')
-pointsR = ax[1].scatter(0, 0)
+pointsR = ax[1].scatter(0, 0, color='orange')
+futur_pointsR = ax[1].scatter(0, 0, color='red')
 flecheR = FancyArrowPatch(posA=(0,0), posB=(1,2), arrowstyle='->')
 ax[1].set(xlim=(-1.5, 1.5), ylim=(-1.5, 1.5))
 ax[1].add_patch(flecheR)
@@ -63,7 +65,11 @@ def plot_data_terrain(data):
     new_dx_W = data["history_W"][0]["dx"] 
     new_dy_W = data["history_W"][0]["dy"] 
 
+    futur_x_W = [data["futur_W"][k]["x"] for k in range(len(data["futur_W"]))]
+    futur_y_W = [data["futur_W"][k]["y"] for k in range(len(data["futur_W"]))]
+
     pointsW.set_offsets(np.c_[new_x_W, new_y_W])
+    futur_pointsW.set_offsets(np.c_[futur_x_W, futur_y_W])
     flecheW.set_positions((new_x_W[0],new_y_W[0]), (new_dx_W, new_dy_W)) 
     fig.canvas.draw()
     fig.canvas.flush_events()
@@ -78,8 +84,12 @@ def plot_data_robot(data):
 
     new_dx_R = data["history_R"][0]["dx"]
     new_dy_R = data["history_R"][0]["dy"]
+
+    futur_x_R = [data["futur_R"][k]["x"] for k in range(len(data["futur_R"]))]
+    futur_y_R = [data["futur_R"][k]["y"] for k in range(len(data["futur_R"]))]
     
     pointsR.set_offsets(np.c_[new_x_R, new_y_R])
+    futur_pointsR.set_offsets(np.c_[futur_x_R, futur_y_R])
     flecheR.set_positions((new_x_R[0],new_y_R[0]), (new_dx_R, new_dy_R)) #/1.5 pour la visualisation
     fig.canvas.draw()
     fig.canvas.flush_events()
@@ -93,7 +103,7 @@ def show_datas(datas_fichier_in):
         datas = json.load(fichier)
 
     instant = 0
-    while instant <= len(datas):
+    while instant <= len(datas)-1:
         plot_data_terrain(datas[instant])
         plot_data_robot(datas[instant])
         
