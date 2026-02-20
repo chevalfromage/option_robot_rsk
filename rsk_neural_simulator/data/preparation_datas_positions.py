@@ -22,6 +22,7 @@ POSITION_SMOOTH_WINDOW = 10
 
 # nombre d'instants precedents (en plus du current dt) à utiliser pour la prédiction
 MEMORY_WINDOW = 10
+FUTUR_WINDOW = 1
 
 # tentative d'arrondir tout au cm pour eviter les mouvbements brownien dans le simu
 def round_values(value, ndigits=3):
@@ -91,24 +92,23 @@ def plot_smoothing_debug(times, raw_x, smooth_x, raw_y, smooth_y, raw_theta, smo
     plt.close(fig)
     print(f"Plot smoothing combiné sauvegardé: {out_path}")
 
-def passage_repere_robot(history_W):
-    history_R = []
-        
-    new_x_W = [history_W[k]["x"] for k in range(len(history_W))]
-    new_y_W = [history_W[k]["y"] for k in range(len(history_W))]
-    new_x_step = [new_x_W[k] - new_x_W[0] for k in range(len(new_x_W))] #juste pour le calcul
-    new_y_step = [new_y_W[k] - new_y_W[0] for k in range(len(new_y_W))] #juste pour le calcul
-    new_theta_W = [history_W[k]["theta"] for k in range(len(history_W))]
-    new_x_R = [new_x_step[k]*np.cos(new_theta_W[0]) + new_y_step[k]*np.sin(new_theta_W[0]) for k in range(len(new_x_W))]
-    new_y_R = [new_x_step[k]*-np.sin(new_theta_W[0]) + new_y_step[k]*np.cos(new_theta_W[0]) for k in range(len(new_x_W))]
-    new_theta_R = [new_theta_W[k] - new_theta_W[0] for k in range(len(new_theta_W))]
+def passage_repere_robot(liste_W, position_robot):
 
-    new_dx_R = [history_W[k]["dx"]/1.5 for k in range(len(history_W))]
-    new_dy_R = [history_W[k]["dy"]/1.5 for k in range(len(history_W))]
-    new_dtheta_R = [history_W[0]["dtheta"]/1.5 for k in range(len(history_W))]
+    new_x_W = [liste_W[k]["x"] for k in range(len(liste_W))]
+    new_y_W = [liste_W[k]["y"] for k in range(len(liste_W))]
+    new_x_step = [new_x_W[k] - position_robot["x"] for k in range(len(new_x_W))] #juste pour le calcul
+    new_y_step = [new_y_W[k] - position_robot["y"] for k in range(len(new_y_W))] #juste pour le calcul
+    new_theta_W = [liste_W[k]["theta"] for k in range(len(liste_W))]
+    new_x_R = [new_x_step[k]*np.cos(position_robot["theta"]) + new_y_step[k]*np.sin(position_robot["theta"]) for k in range(len(new_x_W))]
+    new_y_R = [new_x_step[k]*-np.sin(position_robot["theta"]) + new_y_step[k]*np.cos(position_robot["theta"]) for k in range(len(new_x_W))]
+    new_theta_R = [new_theta_W[k] - position_robot["theta"] for k in range(len(new_theta_W))]
+
+    new_dx_R = [liste_W[k]["dx"]/1.5 for k in range(len(liste_W))]
+    new_dy_R = [liste_W[k]["dy"]/1.5 for k in range(len(liste_W))]
+    new_dtheta_R = [liste_W[k]["dtheta"]/1.5 for k in range(len(liste_W))]
     
-    history_R = [{"x": new_x_R[k], "y": new_y_R[k], "theta": new_theta_R[k], "dx": new_dx_R[k], "dy": new_dy_R[k], "dtheta": new_dtheta_R[k]} for k in range(len(new_x_R))]
-    return history_R
+    liste_R = [{"x": new_x_R[k], "y": new_y_R[k], "theta": new_theta_R[k], "dx": new_dx_R[k], "dy": new_dy_R[k], "dtheta": new_dtheta_R[k]} for k in range(len(new_x_R))]
+    return liste_R
 
 def passage_repere_monde(history_W):
 
@@ -181,11 +181,18 @@ def cleaner_data(datas_fichier_in):
         datas_out[instant]["history_W"] = history_W
 
     for instant in range(len(datas_out)): #création de history_W
-        datas_out[instant]["history_R"] = passage_repere_robot(datas_out[instant]["history_W"])
+        datas_out[instant]["history_R"] = passage_repere_robot(datas_out[instant]["history_W"], datas_out[instant]["history_W"][0])
     
     for instant in range(len(datas_out)): #passage des orders dans le repère monde
         datas_out[instant]["history_W"] = passage_repere_monde(datas_out[instant]["history_W"])
     
+    for instant in range(len(datas_out)): #ajout des états futur
+        datas_out[instant]["futur_W"] = [zero]*FUTUR_WINDOW
+        for instant_futur in range(FUTUR_WINDOW):
+            if instant + instant_futur + 1 < len(datas_out):
+                datas_out[instant]["futur_W"][instant_futur] = datas_out[instant + instant_futur + 1]["history_W"][0]
+        
+        datas_out[instant]["futur_R"] = passage_repere_robot(datas_out[instant]["futur_W"], datas_out[instant]["history_W"][0])
 
     # Nettoyage des clés
     keys_to_remove = ["ball_position", "robot_pose", "orders"]
@@ -195,7 +202,7 @@ def cleaner_data(datas_fichier_in):
 
     dataset_name = datas_fichier_out.stem
 
-    datas_out = [round_values(entry) for entry in datas_out]
+    # datas_out = [round_values(entry) for entry in datas_out]
 
     # Écriture
     datas_fichier_out.parent.mkdir(parents=True, exist_ok=True)
@@ -204,8 +211,7 @@ def cleaner_data(datas_fichier_in):
 
 
 if __name__ == "__main__":
-    print("coucou")
 
-    for json_file in RAW_ROOT.rglob("cross.json"):
+    for json_file in RAW_ROOT.rglob("*.json"):
         print(f"Traitement : {json_file}")
         cleaner_data(json_file)
