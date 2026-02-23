@@ -107,8 +107,8 @@ def passage_repere_robot(liste_W, position_robot):
     new_dy_R = [liste_W[k]["dy"]/1.5 for k in range(len(liste_W))]
     new_dtheta_R = [liste_W[k]["dtheta"]/1.5 for k in range(len(liste_W))]
     
-    liste_R = [{"x": new_x_R[k], "y": new_y_R[k], "theta": new_theta_R[k], "dx": new_dx_R[k], "dy": new_dy_R[k], "dtheta": new_dtheta_R[k]} for k in range(len(new_x_R))]
-    return liste_R
+    history_R = [{"x": new_x_R[k], "y": new_y_R[k], "theta": new_theta_R[k], "dx": new_dx_R[k], "dy": new_dy_R[k], "dtheta": new_dtheta_R[k]} for k in range(len(new_x_R))]
+    return history_R
 
 def passage_repere_monde(history_W):
 
@@ -116,8 +116,8 @@ def passage_repere_monde(history_W):
     new_y_W = [history_W[k]["y"] for k in range(len(history_W))]
     new_theta_W = [history_W[k]["theta"] for k in range(len(history_W))]
 
-    new_dx_W = [(np.cos(new_theta_W[0])*history_W[k]["dx"] - np.sin(new_theta_W[0])*history_W[k]["dy"])/1.5 + new_x_W[0] for k in range(len(history_W))] #/1.5 pour la visualisation
-    new_dy_W = [(np.sin(new_theta_W[0])*history_W[k]["dx"] + np.cos(new_theta_W[0])*history_W[k]["dy"])/1.5 + new_y_W[0] for k in range(len(history_W))] #/1.5 pour la visualisation
+    new_dx_W = [(np.cos(new_theta_W[k])*history_W[k]["dx"] - np.sin(new_theta_W[k])*history_W[k]["dy"])/1.5 + new_x_W[k] for k in range(len(history_W))] #/1.5 pour la visualisation
+    new_dy_W = [(np.sin(new_theta_W[k])*history_W[k]["dx"] + np.cos(new_theta_W[k])*history_W[k]["dy"])/1.5 + new_y_W[k] for k in range(len(history_W))] #/1.5 pour la visualisation
     new_dtheta_W = [(new_theta_W[k] + history_W[k]["dtheta"])/1.5 for k in range(len(history_W))]
 
     history_W = [{"x": new_x_W[k], "y": new_y_W[k], "theta": new_theta_W[k], "dx": new_dx_W[k], "dy": new_dy_W[k], "dtheta": new_dtheta_W[k]} for k in range(len(new_x_W))]

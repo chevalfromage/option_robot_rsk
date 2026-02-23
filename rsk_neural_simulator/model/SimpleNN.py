@@ -1,6 +1,35 @@
 
 import torch.nn as nn
-from rsk_neural_simulator.data.preparation_datas import MEMORY_WINDOW
+from rsk_neural_simulator.data.preparation_datas_positions import MEMORY_WINDOW,FUTUR_WINDOW
+
+
+#def du modèle 
+# Modèle pour la nouvelle disposition des données de février 2026. Avec fenetre passé et futur. Sans les vitesses mais avec les positions uniquement
+# fichier associé: preparation_datas_positions.py et test_datas.py 
+
+input_dim4 = 6*(MEMORY_WINDOW)  # 6 valeurs (x, y, theta, dx, dy, dtheta) par instant dans la mémoire
+    
+#def du modèle
+class SimpleNN4(nn.Module):
+    def __init__(self, input_dimension=input_dim4):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(input_dimension, 64),  #entrées
+            nn.Dropout(0.3),
+            nn.Linear(64, 64), 
+            nn.ReLU(),
+            nn.Linear(64, 64), 
+            nn.ReLU(),
+            nn.Linear(64, 64), 
+            nn.ReLU(),
+            nn.Linear(64, 3)  # couche de sortie
+        )
+
+    def forward(self, x):
+        return self.net(x)
+    
+
+
 
 #def du modèle
 class SimpleNN3(nn.Module):
@@ -34,7 +63,7 @@ class SimpleNN(nn.Module):
             nn.Linear(256, 256), 
             nn.ReLU(),
             nn.Linear(256, 256), 
-            nn.ReLU(),
+            nn.ReLU(),  
             nn.Linear(256, 256), 
             nn.ReLU(),
             nn.Linear(256, 4)  # couche de sortie
