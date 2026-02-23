@@ -32,7 +32,7 @@ path_cross = [
 x_pathW = [path_cross[k][0] for k in range(len(path_cross))]
 y_pathW = [path_cross[k][1] for k in range(len(path_cross))]
 
-fig, ax = plt.subplots(1,2)
+fig, ax = plt.subplots(1,3)
 ax[0].set_aspect('equal', adjustable='box')
 pointsW = ax[0].scatter(0, 0, color='orange')
 futur_pointsW = ax[0].scatter(0, 0, color='red')
@@ -54,8 +54,13 @@ ax[1].add_collection(order_collectionR)
 orientationR = [np.column_stack([[0, 0], [0, 0]])]
 orientation_collectionR = LineCollection(orderR, colors="green", linewidths=1)
 ax[1].add_collection(orientation_collectionR)
-ax[1].set(xlim=(-1.5, 1.5), ylim=(-1.5, 1.5))
+ax[1].set(xlim=(-0.25, 0.25), ylim=(-0.25, 0.25))
 
+ax[2].set_aspect('equal', adjustable='box')
+points_zeroW = ax[2].scatter(0, 0, color='orange')
+points_futur_theta_R = ax[2].scatter(0, 0, color='yellow')
+points_new_dtheta_R = ax[2].scatter(0, 0, color='red')
+ax[2].set(xlim=(-3, 3), ylim=(-3.14, 3.14))
 
 plt.show(block=False)
 
@@ -104,10 +109,13 @@ def plot_data_robot(data):
 
     print(f"new_dx_R : {new_dx_R[0]}, new_dy_R : {new_dx_R[0]}, new_dtheta_R : {new_dtheta_R[0]}")
     print(f"futur_x_R : {futur_x_R[0]}, futur_y_R : {futur_y_R[0]}, futur_theta_R : {futur_theta_R[0]}")
+
+    points_futur_theta_R.set_offsets(np.c_[futur_theta_R[0], 0])
+    points_new_dtheta_R.set_offsets(np.c_[new_dtheta_R[0], 0])
     
     pointsR.set_offsets(np.c_[new_x_R, new_y_R])
     futur_pointsR.set_offsets(np.c_[futur_x_R, futur_y_R])
-    orderR = [[[new_x_R[k],new_y_R[k]], [new_x_R[k] + new_dx_R[k], new_y_R[k] + new_dy_R[k]]] for k in range(len(new_dx_R))]
+    orderR = [[[0,0], [ new_dx_R[k],  new_dy_R[k]]] for k in range(1)]#len(new_dx_R))]
     order_collectionR.set_segments(orderR)
     orientationR = [[[new_x_R[k],new_y_R[k]], [new_x_R[k] + np.cos(new_theta_R[k]), (new_y_R[k] + np.sin(new_theta_R[k]))]] for k in range(1)]#len(new_dx_R))]
     orientation_collectionR.set_segments(orientationR)

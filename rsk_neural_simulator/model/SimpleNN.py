@@ -8,6 +8,7 @@ from rsk_neural_simulator.data.preparation_datas_positions import MEMORY_WINDOW,
 # fichier associé: preparation_datas_positions.py et test_datas.py 
 
 input_dim4 = 6*(MEMORY_WINDOW)  # 6 valeurs (x, y, theta, dx, dy, dtheta) par instant dans la mémoire
+output_dim4 = 3*FUTUR_WINDOW
     
 #def du modèle
 class SimpleNN4(nn.Module):
@@ -22,7 +23,7 @@ class SimpleNN4(nn.Module):
             nn.ReLU(),
             nn.Linear(64, 64), 
             nn.ReLU(),
-            nn.Linear(64, 3)  # couche de sortie
+            nn.Linear(64, output_dim4)  # couche de sortie
         )
 
     def forward(self, x):
