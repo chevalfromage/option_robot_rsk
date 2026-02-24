@@ -11,6 +11,9 @@ from matplotlib.collections import LineCollection
 import keyboard
 import sys
 from rsk import constants as rsk_constants
+from rsk_neural_simulator.model.SimpleNN import SimpleNN4
+import joblib
+import torch
 
 MAX_X = rsk_constants.field_length / 2
 MAX_Y = rsk_constants.field_width / 2
@@ -48,6 +51,7 @@ ax[0].set(xlim=(-1.5, 1.5), ylim=(-1.5, 1.5))
 ax[1].set_aspect('equal', adjustable='box')
 pointsR = ax[1].scatter(0, 0, color='orange')
 futur_pointsR = ax[1].scatter(0, 0, color='red')
+prediction_pointsR = ax[1].scatter(0, 0, color='blue')
 orderR = [np.column_stack([[0, 0], [0, 0]])]
 order_collectionR = LineCollection(orderW, colors="black", linewidths=1)
 ax[1].add_collection(order_collectionR)
@@ -67,6 +71,43 @@ plt.show(block=False)
 def exit():
     keyboard.unhook_all()
     sys.exit()
+
+def prep_data_MLP(input):
+    input_prep = []
+    for k in range(len(input)):
+        input_prep.append(input[k]["x"])
+        input_prep.append(input[k]["y"])
+        input_prep.append(input[k]["theta"])
+        input_prep.append(input[k]["dx"])
+        input_prep.append(input[k]["dy"])
+        input_prep.append(input[k]["dtheta"])
+    input_prep = np.array(input_prep)
+    input_prep = input_prep.reshape(1, -1)
+
+    return input_prep
+
+def test_MLP(input):
+
+    input = prep_data_MLP(input)
+
+    model = SimpleNN4()
+    model.load_state_dict(torch.load("rsk_neural_simulator/model/trained_model/simple_nn_4.pth"))
+    model.eval()
+
+    x_scaler = joblib.load("rsk_neural_simulator/model/trained_model/x_scaler_4.pkl")
+    y_scaler = joblib.load("rsk_neural_simulator/model/trained_model/y_scaler_4.pkl")
+
+
+    x_input = input
+
+    x_scaled = x_scaler.transform(x_input)
+    x_tensor = torch.tensor(x_scaled, dtype=torch.float32)
+    with torch.no_grad():
+        y_scaled = model(x_tensor)
+    y_scaled = y_scaled.cpu().numpy()
+    output = y_scaler.inverse_transform(y_scaled)[0]
+    return output
+
 
 def plot_data_terrain(data):
     global init_graph
@@ -107,14 +148,15 @@ def plot_data_robot(data):
     futur_y_R = [data["futur_R"][k]["y"] for k in range(len(data["futur_R"]))]
     futur_theta_R = [data["futur_R"][k]["theta"] for k in range(len(data["futur_R"]))]
 
-    print(f"new_dx_R : {new_dx_R[0]}, new_dy_R : {new_dx_R[0]}, new_dtheta_R : {new_dtheta_R[0]}")
-    print(f"futur_x_R : {futur_x_R[0]}, futur_y_R : {futur_y_R[0]}, futur_theta_R : {futur_theta_R[0]}")
-
     points_futur_theta_R.set_offsets(np.c_[futur_theta_R[0], 0])
     points_new_dtheta_R.set_offsets(np.c_[new_dtheta_R[0], 0])
     
+    prediction = test_MLP(data["history_R"])
+    print(f"prediction : {prediction}")
+
     pointsR.set_offsets(np.c_[new_x_R, new_y_R])
     futur_pointsR.set_offsets(np.c_[futur_x_R, futur_y_R])
+    prediction_pointsR.set_offsets(np.c_[prediction[0], prediction[1]])
     orderR = [[[0,0], [ new_dx_R[k],  new_dy_R[k]]] for k in range(1)]#len(new_dx_R))]
     order_collectionR.set_segments(orderR)
     orientationR = [[[new_x_R[k],new_y_R[k]], [new_x_R[k] + np.cos(new_theta_R[k]), (new_y_R[k] + np.sin(new_theta_R[k]))]] for k in range(1)]#len(new_dx_R))]

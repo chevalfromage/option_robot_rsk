@@ -91,15 +91,7 @@ if "futur_R" in df.columns:
     # Optionnel : enlever la colonne liste originale pour éviter confusion
     df = df.drop(columns=[c for c in ["futur_R"] if c in df.columns])
 
-# Colonnes de base (features à t)
-base_X_cols = [
-    "x",
-    "y",
-    "theta",
-    "dx",
-    "dy",
-    "dtheta"
-]
+
 
 # Ajouter les features mémoire (derivee_history t-1 .. t-MEMORY_WINDOW)
 # pandas.json_normalize génère des colonnes nommées derivee_history.<idx>.<key>
@@ -153,6 +145,7 @@ if missing_X or missing_Y:
 X = df[X_cols]
 Y = df[Y_cols]
 
+print(f"X : {X}")
 
 SEED = 42
 
