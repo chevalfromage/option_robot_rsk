@@ -21,7 +21,7 @@ THETA_SMOOTH_WINDOW = 15
 POSITION_SMOOTH_WINDOW = 10
 
 # nombre d'instants precedents (en plus du current dt) à utiliser pour la prédiction
-MEMORY_WINDOW = 10
+MEMORY_WINDOW = 5
 FUTUR_WINDOW = 1
 
 # tentative d'arrondir tout au cm pour eviter les mouvbements brownien dans le simu
@@ -105,7 +105,7 @@ def passage_repere_robot(liste_W, position_robot):
 
     new_dx_R = [liste_W[k]["dx"]/1.5 for k in range(len(liste_W))]
     new_dy_R = [liste_W[k]["dy"]/1.5 for k in range(len(liste_W))]
-    new_dtheta_R = [liste_W[k]["dtheta"]/1.5 for k in range(len(liste_W))]
+    new_dtheta_R = [liste_W[k]["dtheta"] for k in range(len(liste_W))]
     
     history_R = [{"x": new_x_R[k], "y": new_y_R[k], "theta": new_theta_R[k], "dx": new_dx_R[k], "dy": new_dy_R[k], "dtheta": new_dtheta_R[k]} for k in range(len(new_x_R))]
     return history_R
@@ -164,11 +164,18 @@ def cleaner_data(datas_fichier_in):
         datas_out[i]["robot_pose"]["y"] = y_series[i]
         datas_out[i]["robot_pose"]["theta"] = theta_series[i]
 
+    # data_out_racourcis=[] # Pour regarder 1 instant sur 5
+    # for instant in range(len(datas_out)):
+    #     if instant%5==0:
+    #         data_out_racourcis.append(datas_out[instant])
+    # data_out = data_out_racourcis
+
     zero = {"x": 0.0, "y": 0.0, "theta": 0.0, "dx": 0.0, "dy": 0.0, "dtheta": 0.0}
 
     for instant in range(len(datas_out)):
         pos = datas_out[instant]["robot_pose"]
         dt = datas_out[instant]["timestamp"] - datas_out[instant-1]["timestamp"]
+        datas_out[instant]["delta_t"] = dt
         dt = 0.033
 
         history_W = []

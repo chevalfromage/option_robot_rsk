@@ -17,15 +17,20 @@ from rsk_neural_simulator.data.preparation_datas_positions import MEMORY_WINDOW,
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 base_path = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "data", "clean"))
 TRAINED_MODEL_DIR = os.path.join(SCRIPT_DIR, "trained_model")
-TRAINED_MODEL_NAME = "simple_nn_4.pth"
-SCALER_X_NAME = "x_scaler_4.pkl"
-SCALER_Y_NAME = "y_scaler_4.pkl"
+TRAINED_MODEL_NAME = "simple_nn_4W.pth"
+SCALER_X_NAME = "x_scaler_4W.pkl"
+SCALER_Y_NAME = "y_scaler_4W.pkl"
 
 all_dfs = []
 
-json_pattern = os.path.join(base_path, "**", "*.json") # cross pour le debug mais sinon *
+json_pattern = os.path.join(base_path, "**", "*.json")
+
 for json_path in glob.glob(json_pattern, recursive=True):
+    if os.path.basename(json_path) == "cross.json":
+        continue 
+
     with open(json_path) as f:
+        print(json_path)
         data = json.load(f)
 
     df_tmp = pd.json_normalize(data)
@@ -40,83 +45,84 @@ print("Nombre total d'échantillons :", len(df))
 
 # Si la colonne 'derivee_history' existe (MEMORY_WINDOW > 0 ), 
 # l'exploser en colonnes
-if "history_R" in df.columns:
+if "history_W" in df.columns:
     # Chaque entrée doit être une liste de dicts de longueur MEMORY_WINDOW
     for idx in range(MEMORY_WINDOW):
         # extraire les clés pour ce pas mémoire
-        df[f"history_R.{idx}.x"] = df["history_R"].apply(
+        df[f"history_W.{idx}.x"] = df["history_W"].apply(
             lambda h: h[idx]["x"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "x" in h[idx] else 0.0
         )
-        df[f"history_R.{idx}.y"] = df["history_R"].apply(
+        df[f"history_W.{idx}.y"] = df["history_W"].apply(
             lambda h: h[idx]["y"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "y" in h[idx] else 0.0
         )
-        df[f"history_R.{idx}.theta"] = df["history_R"].apply(
+        df[f"history_W.{idx}.theta"] = df["history_W"].apply(
             lambda h: h[idx]["theta"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "theta" in h[idx] else 0.0
         )
-        df[f"history_R.{idx}.dx"] = df["history_R"].apply(
+        df[f"history_W.{idx}.dx"] = df["history_W"].apply(
             lambda h: h[idx]["dx"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "dx" in h[idx] else 0.0
         )
-        df[f"history_R.{idx}.dy"] = df["history_R"].apply(
+        df[f"history_W.{idx}.dy"] = df["history_W"].apply(
             lambda h: h[idx]["dy"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "dy" in h[idx] else 0.0
         )
-        df[f"history_R.{idx}.dtheta"] = df["history_R"].apply(
+        df[f"history_W.{idx}.dtheta"] = df["history_W"].apply(
             lambda h: h[idx]["dtheta"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "dtheta" in h[idx] else 0.0
         )
 
     # Optionnel : enlever la colonne liste originale pour éviter confusion
-    df = df.drop(columns=[c for c in ["history_R"] if c in df.columns])
+    df = df.drop(columns=[c for c in ["history_W"] if c in df.columns])
 
-if "futur_R" in df.columns:
+if "futur_W" in df.columns:
     for idx in range(FUTUR_WINDOW):
         # extraire les clés pour ce pas mémoire
-        df[f"futur_R.{idx}.x"] = df["futur_R"].apply(
+        df[f"futur_W.{idx}.x"] = df["futur_W"].apply(
             lambda h: h[idx]["x"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "x" in h[idx] else 0.0
         )
-        df[f"futur_R.{idx}.y"] = df["futur_R"].apply(
+        df[f"futur_W.{idx}.y"] = df["futur_W"].apply(
             lambda h: h[idx]["y"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "y" in h[idx] else 0.0
         )
-        df[f"futur_R.{idx}.theta"] = df["futur_R"].apply(
+        df[f"futur_W.{idx}.theta"] = df["futur_W"].apply(
             lambda h: h[idx]["theta"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "theta" in h[idx] else 0.0
         )
-        df[f"futur_R.{idx}.dx"] = df["futur_R"].apply(
+        df[f"futur_W.{idx}.dx"] = df["futur_W"].apply(
             lambda h: h[idx]["dx"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "dx" in h[idx] else 0.0
         )
-        df[f"futur_R.{idx}.dy"] = df["futur_R"].apply(
+        df[f"futur_W.{idx}.dy"] = df["futur_W"].apply(
             lambda h: h[idx]["dy"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "dy" in h[idx] else 0.0
         )
-        df[f"futur_R.{idx}.dtheta"] = df["futur_R"].apply(
+        df[f"futur_W.{idx}.dtheta"] = df["futur_W"].apply(
             lambda h: h[idx]["dtheta"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "dtheta" in h[idx] else 0.0
         )
 
     # Optionnel : enlever la colonne liste originale pour éviter confusion
-    df = df.drop(columns=[c for c in ["futur_R"] if c in df.columns])
+    df = df.drop(columns=[c for c in ["futur_W"] if c in df.columns])
 
 
 
 # Ajouter les features mémoire (derivee_history t-1 .. t-MEMORY_WINDOW)
 # pandas.json_normalize génère des colonnes nommées derivee_history.<idx>.<key>
-mem_X_cols = []
+mem_X_cols = ["delta_t"]
 for idx in range(MEMORY_WINDOW):
     mem_X_cols.extend(
         [
-            f"history_R.{idx}.x",
-            f"history_R.{idx}.y",
-            f"history_R.{idx}.theta",
-            f"history_R.{idx}.dx",
-            f"history_R.{idx}.dy",
-            f"history_R.{idx}.dtheta",
+            f"history_W.{idx}.x",
+            f"history_W.{idx}.y",
+            f"history_W.{idx}.theta",
+            f"history_W.{idx}.dx",
+            f"history_W.{idx}.dy",
+            f"history_W.{idx}.dtheta",
         ]
 
     )
-X_cols = mem_X_cols
+X_cols = mem_X_cols 
+
 
 fut_Y_cols = []
 for idx in range(FUTUR_WINDOW):
     fut_Y_cols.extend(
         [
-            f"futur_R.{idx}.x",
-            f"futur_R.{idx}.y",
-            f"futur_R.{idx}.theta",
+            f"futur_W.{idx}.x",
+            f"futur_W.{idx}.y",
+            f"futur_W.{idx}.theta",
         ]
     )
 Y_cols = fut_Y_cols
@@ -200,7 +206,7 @@ optimizer = optim.Adam(model.parameters(), lr=10e-4)  # descente de gradient
 
 epochs = 800
 early_stop = 20
-val_loss_prev =0
+val_loss_prev = 0
 
 # historique des loss pour les plotter 
 train_loss_history: List[float] = []

@@ -39,6 +39,7 @@ fig, ax = plt.subplots(1,3)
 ax[0].set_aspect('equal', adjustable='box')
 pointsW = ax[0].scatter(0, 0, color='orange')
 futur_pointsW = ax[0].scatter(0, 0, color='red')
+prediction_pointsW = ax[0].scatter(0, 0, color='blue')
 pathW = ax[0].scatter(x_pathW, y_pathW)
 orderW = [np.column_stack([[0, 0], [0, 0]])]
 order_collectionW = LineCollection(orderW, colors="black", linewidths=1)
@@ -58,13 +59,14 @@ ax[1].add_collection(order_collectionR)
 orientationR = [np.column_stack([[0, 0], [0, 0]])]
 orientation_collectionR = LineCollection(orderR, colors="green", linewidths=1)
 ax[1].add_collection(orientation_collectionR)
-ax[1].set(xlim=(-0.25, 0.25), ylim=(-0.25, 0.25))
+ax[1].set(xlim=(-0.1, 0.1), ylim=(-0.1, 0.1))
 
 ax[2].set_aspect('equal', adjustable='box')
-points_zeroW = ax[2].scatter(0, 0, color='orange')
-points_futur_theta_R = ax[2].scatter(0, 0, color='yellow')
-points_new_dtheta_R = ax[2].scatter(0, 0, color='red')
-ax[2].set(xlim=(-3, 3), ylim=(-3.14, 3.14))
+points_zeroW = ax[2].scatter(0, 0, color='yellow')
+points_futur_theta_R = ax[2].scatter(0, 0, color='red')
+prediction_theta_R = ax[2].scatter(0, 0, color='blue')
+points_new_dtheta_R = ax[2].scatter(0, 0, color='black')
+ax[2].set(xlim=(-3.14, 3.14), ylim=(-3.14, 3.14))
 
 plt.show(block=False)
 
@@ -72,31 +74,46 @@ def exit():
     keyboard.unhook_all()
     sys.exit()
 
-def prep_data_MLP(input):
-    input_prep = []
-    for k in range(len(input)):
-        input_prep.append(input[k]["x"])
-        input_prep.append(input[k]["y"])
-        input_prep.append(input[k]["theta"])
-        input_prep.append(input[k]["dx"])
-        input_prep.append(input[k]["dy"])
-        input_prep.append(input[k]["dtheta"])
+def prep_data_MLP(input, ref):
+    input_prep = [input["delta_t"]]
+    if(ref == 'R'):
+        for k in range(len(input["history_R"])):
+            input_prep.append(input["history_R"][k]["x"])
+            input_prep.append(input["history_R"][k]["y"])
+            input_prep.append(input["history_R"][k]["theta"])
+            input_prep.append(input["history_R"][k]["dx"])
+            input_prep.append(input["history_R"][k]["dy"])
+            input_prep.append(input["history_R"][k]["dtheta"])
+    elif(ref== 'W'):
+        for k in range(len(input["history_W"])):
+            input_prep.append(input["history_W"][k]["x"])
+            input_prep.append(input["history_W"][k]["y"])
+            input_prep.append(input["history_W"][k]["theta"])
+            input_prep.append(input["history_W"][k]["dx"])
+            input_prep.append(input["history_W"][k]["dy"])
+            input_prep.append(input["history_W"][k]["dtheta"])
     input_prep = np.array(input_prep)
     input_prep = input_prep.reshape(1, -1)
 
     return input_prep
 
-def test_MLP(input):
+def test_MLP(input, ref):
 
-    input = prep_data_MLP(input)
+    input = prep_data_MLP(input, ref)
 
     model = SimpleNN4()
-    model.load_state_dict(torch.load("rsk_neural_simulator/model/trained_model/simple_nn_4.pth"))
+    if(ref == 'W'):
+        model.load_state_dict(torch.load("rsk_neural_simulator/model/trained_model/simple_nn_4W.pth"))
+        x_scaler = joblib.load("rsk_neural_simulator/model/trained_model/x_scaler_4W.pkl")
+        y_scaler = joblib.load("rsk_neural_simulator/model/trained_model/y_scaler_4W.pkl")
+        print("world")
+    elif(ref == 'R'):
+        model.load_state_dict(torch.load("rsk_neural_simulator/model/trained_model/simple_nn_4R.pth"))
+        x_scaler = joblib.load("rsk_neural_simulator/model/trained_model/x_scaler_4R.pkl")
+        y_scaler = joblib.load("rsk_neural_simulator/model/trained_model/y_scaler_4R.pkl")
+    else:
+        print("référentiel inexistant")
     model.eval()
-
-    x_scaler = joblib.load("rsk_neural_simulator/model/trained_model/x_scaler_4.pkl")
-    y_scaler = joblib.load("rsk_neural_simulator/model/trained_model/y_scaler_4.pkl")
-
 
     x_input = input
 
@@ -123,11 +140,14 @@ def plot_data_terrain(data):
     futur_x_W = [data["futur_W"][k]["x"] for k in range(len(data["futur_W"]))]
     futur_y_W = [data["futur_W"][k]["y"] for k in range(len(data["futur_W"]))]
 
+    predictionW = test_MLP(data, 'W')
+
     pointsW.set_offsets(np.c_[new_x_W, new_y_W])
     futur_pointsW.set_offsets(np.c_[futur_x_W, futur_y_W])
+    prediction_pointsW.set_offsets(np.c_[predictionW[0], predictionW[1]])
     orderW = [[[new_x_W[k],new_y_W[k]], [new_dx_W[k], new_dy_W[k]]] for k in range(len(new_dx_W))]
     order_collectionW.set_segments(orderW)
-    orientationW = [[[new_x_W[k],new_y_W[k]], [new_x_W[k] + np.cos(new_theta_W[k]), (new_y_W[k] + np.sin(new_theta_W[k]))]] for k in range(1)]#len(new_dx_W))]
+    orientationW = [[[new_x_W[k],new_y_W[k]], [new_x_W[k] + np.cos(new_theta_W[k]), (new_y_W[k] + np.sin(new_theta_W[k]))]] for k in range(len(new_dx_W))]
     orientation_collectionW.set_segments(orientationW)
     fig.canvas.draw()
     fig.canvas.flush_events()
@@ -148,18 +168,22 @@ def plot_data_robot(data):
     futur_y_R = [data["futur_R"][k]["y"] for k in range(len(data["futur_R"]))]
     futur_theta_R = [data["futur_R"][k]["theta"] for k in range(len(data["futur_R"]))]
 
+    # prediction = test_MLP(data, 'R')
+    # print(f"prediction : {prediction}")
+
     points_futur_theta_R.set_offsets(np.c_[futur_theta_R[0], 0])
+    # prediction_theta_R.set_offsets(np.c_[prediction[2], 0])
     points_new_dtheta_R.set_offsets(np.c_[new_dtheta_R[0], 0])
-    
-    prediction = test_MLP(data["history_R"])
-    print(f"prediction : {prediction}")
 
     pointsR.set_offsets(np.c_[new_x_R, new_y_R])
     futur_pointsR.set_offsets(np.c_[futur_x_R, futur_y_R])
-    prediction_pointsR.set_offsets(np.c_[prediction[0], prediction[1]])
+    # prediction_pointsR.set_offsets(np.c_[prediction[0], prediction[1]])
     orderR = [[[0,0], [ new_dx_R[k],  new_dy_R[k]]] for k in range(1)]#len(new_dx_R))]
     order_collectionR.set_segments(orderR)
-    orientationR = [[[new_x_R[k],new_y_R[k]], [new_x_R[k] + np.cos(new_theta_R[k]), (new_y_R[k] + np.sin(new_theta_R[k]))]] for k in range(1)]#len(new_dx_R))]
+    orientationR = [[[new_x_R[k],new_y_R[k]], [new_x_R[k] + np.cos(new_theta_R[k]), (new_y_R[k] + np.sin(new_theta_R[k]))]] for k in range(len(new_dx_R))]
+    orientation_futurR = [[[futur_x_R[k],futur_y_R[k]], [futur_x_R[k] + np.cos(futur_theta_R[k]), (futur_y_R[k] + np.sin(futur_theta_R[k]))]] for k in range(len(futur_x_R))]
+    # orientation_predictionR = [[[prediction[0],prediction[1]], [prediction[0] + np.cos(prediction[2]), (prediction[1] + np.sin(prediction[2]))]]]
+    # orientationR = orientationR + orientation_futurR + orientation_predictionR
     orientation_collectionR.set_segments(orientationR)
     fig.canvas.draw()
     fig.canvas.flush_events()
