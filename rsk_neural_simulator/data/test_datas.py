@@ -23,7 +23,7 @@ RAW_ROOT = SCRIPT_DIR / "raw"
 CLEAN_ROOT = SCRIPT_DIR / "clean"
 PLOTS_ROOT = SCRIPT_DIR / "plots"
 PLOTS_ROOT.mkdir(parents=True, exist_ok=True)
-PLOT_DATASET_NAME = "random_waypoints" #mettre à none pour tout plotter
+PLOT_DATASET_NAME = "random_waypoints"
 _PLOT_KEYS_DONE: set[str] = set()
 
 
@@ -147,7 +147,7 @@ def plot_data_terrain(data):
     prediction_pointsW.set_offsets(np.c_[predictionW[0], predictionW[1]])
     orderW = [[[new_x_W[k],new_y_W[k]], [new_dx_W[k], new_dy_W[k]]] for k in range(len(new_dx_W))]
     order_collectionW.set_segments(orderW)
-    orientationW = [[[new_x_W[k],new_y_W[k]], [new_x_W[k] + np.cos(new_theta_W[k]), (new_y_W[k] + np.sin(new_theta_W[k]))]] for k in range(len(new_dx_W))]
+    orientationW = [[[new_x_W[k],new_y_W[k]], [new_x_W[k] + np.cos(new_theta_W[k]), (new_y_W[k] + np.sin(new_theta_W[k]))]] for k in range(len(new_x_W))]
     orientation_collectionW.set_segments(orientationW)
     fig.canvas.draw()
     fig.canvas.flush_events()
@@ -168,22 +168,22 @@ def plot_data_robot(data):
     futur_y_R = [data["futur_R"][k]["y"] for k in range(len(data["futur_R"]))]
     futur_theta_R = [data["futur_R"][k]["theta"] for k in range(len(data["futur_R"]))]
 
-    # prediction = test_MLP(data, 'R')
+    prediction = test_MLP(data, 'R')
     # print(f"prediction : {prediction}")
 
     points_futur_theta_R.set_offsets(np.c_[futur_theta_R[0], 0])
-    # prediction_theta_R.set_offsets(np.c_[prediction[2], 0])
+    prediction_theta_R.set_offsets(np.c_[prediction[2], 0])
     points_new_dtheta_R.set_offsets(np.c_[new_dtheta_R[0], 0])
 
     pointsR.set_offsets(np.c_[new_x_R, new_y_R])
     futur_pointsR.set_offsets(np.c_[futur_x_R, futur_y_R])
-    # prediction_pointsR.set_offsets(np.c_[prediction[0], prediction[1]])
-    orderR = [[[0,0], [ new_dx_R[k],  new_dy_R[k]]] for k in range(1)]#len(new_dx_R))]
+    prediction_pointsR.set_offsets(np.c_[prediction[0], prediction[1]])
+    orderR = [[[new_x_R[k],new_y_R[k]], [ new_dx_R[k],  new_dy_R[k]]] for k in range(len(new_dx_R))]
     order_collectionR.set_segments(orderR)
     orientationR = [[[new_x_R[k],new_y_R[k]], [new_x_R[k] + np.cos(new_theta_R[k]), (new_y_R[k] + np.sin(new_theta_R[k]))]] for k in range(len(new_dx_R))]
     orientation_futurR = [[[futur_x_R[k],futur_y_R[k]], [futur_x_R[k] + np.cos(futur_theta_R[k]), (futur_y_R[k] + np.sin(futur_theta_R[k]))]] for k in range(len(futur_x_R))]
-    # orientation_predictionR = [[[prediction[0],prediction[1]], [prediction[0] + np.cos(prediction[2]), (prediction[1] + np.sin(prediction[2]))]]]
-    # orientationR = orientationR + orientation_futurR + orientation_predictionR
+    orientation_predictionR = [[[prediction[0],prediction[1]], [prediction[0] + np.cos(prediction[2]), (prediction[1] + np.sin(prediction[2]))]]]
+    orientationR = orientationR + orientation_futurR + orientation_predictionR
     orientation_collectionR.set_segments(orientationR)
     fig.canvas.draw()
     fig.canvas.flush_events()

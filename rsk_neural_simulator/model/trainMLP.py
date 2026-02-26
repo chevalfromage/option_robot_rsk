@@ -14,12 +14,16 @@ from typing import List
 from .SimpleNN import SimpleNN, SimpleNN3, SimpleNNMemory, SimpleNN4
 from rsk_neural_simulator.data.preparation_datas_positions import MEMORY_WINDOW, FUTUR_WINDOW
 
+REPERE = 'R'
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 base_path = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "data", "clean"))
 TRAINED_MODEL_DIR = os.path.join(SCRIPT_DIR, "trained_model")
-TRAINED_MODEL_NAME = "simple_nn_4W.pth"
-SCALER_X_NAME = "x_scaler_4W.pkl"
-SCALER_Y_NAME = "y_scaler_4W.pkl"
+TRAINED_MODEL_NAME = f"simple_nn_4{REPERE}.pth"
+SCALER_X_NAME = f"x_scaler_4{REPERE}.pkl"
+SCALER_Y_NAME = f"y_scaler_4{REPERE}.pkl"
+
+print(TRAINED_MODEL_NAME)
 
 all_dfs = []
 
@@ -45,56 +49,56 @@ print("Nombre total d'échantillons :", len(df))
 
 # Si la colonne 'derivee_history' existe (MEMORY_WINDOW > 0 ), 
 # l'exploser en colonnes
-if "history_W" in df.columns:
+if f"history_{REPERE}" in df.columns:
     # Chaque entrée doit être une liste de dicts de longueur MEMORY_WINDOW
     for idx in range(MEMORY_WINDOW):
         # extraire les clés pour ce pas mémoire
-        df[f"history_W.{idx}.x"] = df["history_W"].apply(
+        df[f"history_{REPERE}.{idx}.x"] = df[f"history_{REPERE}"].apply(
             lambda h: h[idx]["x"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "x" in h[idx] else 0.0
         )
-        df[f"history_W.{idx}.y"] = df["history_W"].apply(
+        df[f"history_{REPERE}.{idx}.y"] = df[f"history_{REPERE}"].apply(
             lambda h: h[idx]["y"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "y" in h[idx] else 0.0
         )
-        df[f"history_W.{idx}.theta"] = df["history_W"].apply(
+        df[f"history_{REPERE}.{idx}.theta"] = df[f"history_{REPERE}"].apply(
             lambda h: h[idx]["theta"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "theta" in h[idx] else 0.0
         )
-        df[f"history_W.{idx}.dx"] = df["history_W"].apply(
+        df[f"history_{REPERE}.{idx}.dx"] = df[f"history_{REPERE}"].apply(
             lambda h: h[idx]["dx"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "dx" in h[idx] else 0.0
         )
-        df[f"history_W.{idx}.dy"] = df["history_W"].apply(
+        df[f"history_{REPERE}.{idx}.dy"] = df[f"history_{REPERE}"].apply(
             lambda h: h[idx]["dy"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "dy" in h[idx] else 0.0
         )
-        df[f"history_W.{idx}.dtheta"] = df["history_W"].apply(
+        df[f"history_{REPERE}.{idx}.dtheta"] = df[f"history_{REPERE}"].apply(
             lambda h: h[idx]["dtheta"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "dtheta" in h[idx] else 0.0
         )
 
     # Optionnel : enlever la colonne liste originale pour éviter confusion
-    df = df.drop(columns=[c for c in ["history_W"] if c in df.columns])
+    df = df.drop(columns=[c for c in [f"history_{REPERE}"] if c in df.columns])
 
-if "futur_W" in df.columns:
+if f"futur_{REPERE}" in df.columns:
     for idx in range(FUTUR_WINDOW):
         # extraire les clés pour ce pas mémoire
-        df[f"futur_W.{idx}.x"] = df["futur_W"].apply(
+        df[f"futur_{REPERE}.{idx}.x"] = df[f"futur_{REPERE}"].apply(
             lambda h: h[idx]["x"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "x" in h[idx] else 0.0
         )
-        df[f"futur_W.{idx}.y"] = df["futur_W"].apply(
+        df[f"futur_{REPERE}.{idx}.y"] = df[f"futur_{REPERE}"].apply(
             lambda h: h[idx]["y"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "y" in h[idx] else 0.0
         )
-        df[f"futur_W.{idx}.theta"] = df["futur_W"].apply(
+        df[f"futur_{REPERE}.{idx}.theta"] = df[f"futur_{REPERE}"].apply(
             lambda h: h[idx]["theta"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "theta" in h[idx] else 0.0
         )
-        df[f"futur_W.{idx}.dx"] = df["futur_W"].apply(
+        df[f"futur_{REPERE}.{idx}.dx"] = df[f"futur_{REPERE}"].apply(
             lambda h: h[idx]["dx"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "dx" in h[idx] else 0.0
         )
-        df[f"futur_W.{idx}.dy"] = df["futur_W"].apply(
+        df[f"futur_{REPERE}.{idx}.dy"] = df[f"futur_{REPERE}"].apply(
             lambda h: h[idx]["dy"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "dy" in h[idx] else 0.0
         )
-        df[f"futur_W.{idx}.dtheta"] = df["futur_W"].apply(
+        df[f"futur_{REPERE}.{idx}.dtheta"] = df[f"futur_{REPERE}"].apply(
             lambda h: h[idx]["dtheta"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "dtheta" in h[idx] else 0.0
         )
 
     # Optionnel : enlever la colonne liste originale pour éviter confusion
-    df = df.drop(columns=[c for c in ["futur_W"] if c in df.columns])
+    df = df.drop(columns=[c for c in [f"futur_{REPERE}"] if c in df.columns])
 
 
 
@@ -104,12 +108,12 @@ mem_X_cols = ["delta_t"]
 for idx in range(MEMORY_WINDOW):
     mem_X_cols.extend(
         [
-            f"history_W.{idx}.x",
-            f"history_W.{idx}.y",
-            f"history_W.{idx}.theta",
-            f"history_W.{idx}.dx",
-            f"history_W.{idx}.dy",
-            f"history_W.{idx}.dtheta",
+            f"history_{REPERE}.{idx}.x",
+            f"history_{REPERE}.{idx}.y",
+            f"history_{REPERE}.{idx}.theta",
+            f"history_{REPERE}.{idx}.dx",
+            f"history_{REPERE}.{idx}.dy",
+            f"history_{REPERE}.{idx}.dtheta",
         ]
 
     )
@@ -120,9 +124,9 @@ fut_Y_cols = []
 for idx in range(FUTUR_WINDOW):
     fut_Y_cols.extend(
         [
-            f"futur_W.{idx}.x",
-            f"futur_W.{idx}.y",
-            f"futur_W.{idx}.theta",
+            f"futur_{REPERE}.{idx}.x",
+            f"futur_{REPERE}.{idx}.y",
+            f"futur_{REPERE}.{idx}.theta",
         ]
     )
 Y_cols = fut_Y_cols
@@ -222,7 +226,7 @@ for epoch in range(epochs):
     model.train()
     optimizer.zero_grad() 
 
-    preds = model(X_train_t) 
+    preds = model(X_train_t)
     train_loss = criterion(preds, Y_train_t)  #calcul de la loss à cette epoch
 
     train_loss.backward() #backpropagation

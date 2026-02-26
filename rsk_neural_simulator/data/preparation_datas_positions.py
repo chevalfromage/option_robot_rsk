@@ -21,7 +21,7 @@ THETA_SMOOTH_WINDOW = 15
 POSITION_SMOOTH_WINDOW = 10
 
 # nombre d'instants precedents (en plus du current dt) à utiliser pour la prédiction
-MEMORY_WINDOW = 5
+MEMORY_WINDOW = 10
 FUTUR_WINDOW = 1
 
 # tentative d'arrondir tout au cm pour eviter les mouvbements brownien dans le simu
@@ -103,22 +103,22 @@ def passage_repere_robot(liste_W, position_robot):
     new_y_R = [new_x_step[k]*-np.sin(position_robot["theta"]) + new_y_step[k]*np.cos(position_robot["theta"]) for k in range(len(new_x_W))]
     new_theta_R = [new_theta_W[k] - position_robot["theta"] for k in range(len(new_theta_W))]
 
-    new_dx_R = [liste_W[k]["dx"]/1.5 for k in range(len(liste_W))]
-    new_dy_R = [liste_W[k]["dy"]/1.5 for k in range(len(liste_W))]
-    new_dtheta_R = [liste_W[k]["dtheta"] for k in range(len(liste_W))]
+    new_dx_R = [(liste_W[k]["dx"]*np.cos(new_theta_R[k]) - liste_W[k]["dy"]*np.sin(new_theta_R[k]))/1.5 + new_x_R[k] for k in range(len(liste_W))]
+    new_dy_R = [(liste_W[k]["dx"]*np.sin(new_theta_R[k]) + liste_W[k]["dy"]*np.cos(new_theta_R[k]))/1.5 + new_y_R[k] for k in range(len(liste_W))]
+    new_dtheta_R = [liste_W[k]["dtheta"]/1.5 - (position_robot["theta"]-new_theta_R[k]) for k in range(len(liste_W))]
     
     history_R = [{"x": new_x_R[k], "y": new_y_R[k], "theta": new_theta_R[k], "dx": new_dx_R[k], "dy": new_dy_R[k], "dtheta": new_dtheta_R[k]} for k in range(len(new_x_R))]
     return history_R
 
-def passage_repere_monde(history_W):
+def passage_repere_monde(data):
 
-    new_x_W = [history_W[k]["x"] for k in range(len(history_W))]
-    new_y_W = [history_W[k]["y"] for k in range(len(history_W))]
-    new_theta_W = [history_W[k]["theta"] for k in range(len(history_W))]
+    new_x_W = [data[k]["x"] for k in range(len(data))]
+    new_y_W = [data[k]["y"] for k in range(len(data))]
+    new_theta_W = [data[k]["theta"] for k in range(len(data))]
 
-    new_dx_W = [(np.cos(new_theta_W[k])*history_W[k]["dx"] - np.sin(new_theta_W[k])*history_W[k]["dy"])/1.5 + new_x_W[k] for k in range(len(history_W))] #/1.5 pour la visualisation
-    new_dy_W = [(np.sin(new_theta_W[k])*history_W[k]["dx"] + np.cos(new_theta_W[k])*history_W[k]["dy"])/1.5 + new_y_W[k] for k in range(len(history_W))] #/1.5 pour la visualisation
-    new_dtheta_W = [(new_theta_W[k] + history_W[k]["dtheta"])/1.5 for k in range(len(history_W))]
+    new_dx_W = [(np.cos(new_theta_W[k])*data[k]["dx"] - np.sin(new_theta_W[k])*data[k]["dy"])/1.5 + new_x_W[k] for k in range(len(data))] #/1.5 pour la visualisation
+    new_dy_W = [(np.sin(new_theta_W[k])*data[k]["dx"] + np.cos(new_theta_W[k])*data[k]["dy"])/1.5 + new_y_W[k] for k in range(len(data))] #/1.5 pour la visualisation
+    new_dtheta_W = [(new_theta_W[k] + data[k]["dtheta"]/1.5) for k in range(len(data))]
 
     history_W = [{"x": new_x_W[k], "y": new_y_W[k], "theta": new_theta_W[k], "dx": new_dx_W[k], "dy": new_dy_W[k], "dtheta": new_dtheta_W[k]} for k in range(len(new_x_W))]
     return history_W
@@ -155,9 +155,8 @@ def cleaner_data(datas_fichier_in):
     y_series = y_series_raw
     theta_times = [entry["timestamp"] for entry in datas_out]
 
-    orders = [entry["orders"] for entry in datas_out]
-    positions = [entry["robot_pose"] for entry in datas_out]
-
+    orders = [datas_out[(k+1)%len(datas_out)]["orders"] for k in range(len(datas_out))]
+    positions = [datas_out[k]["robot_pose"] for k in range(len(datas_out))]
 
     for i in range(len(datas_out)):
         datas_out[i]["robot_pose"]["x"] = x_series[i]
