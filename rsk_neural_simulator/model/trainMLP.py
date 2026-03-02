@@ -14,7 +14,7 @@ from typing import List
 from .SimpleNN import SimpleNN, SimpleNN3, SimpleNNMemory, SimpleNN4
 from rsk_neural_simulator.data.preparation_datas_positions import MEMORY_WINDOW, FUTUR_WINDOW
 
-REPERE = 'R'
+REPERE = 'W'
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 base_path = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "data", "clean"))
@@ -53,6 +53,9 @@ if f"history_{REPERE}" in df.columns:
     # Chaque entrée doit être une liste de dicts de longueur MEMORY_WINDOW
     for idx in range(MEMORY_WINDOW):
         # extraire les clés pour ce pas mémoire
+        df[f"history_{REPERE}.{idx}.delta_t"] = df[f"history_{REPERE}"].apply(
+            lambda h: h[idx]["delta_t"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "delta_t" in h[idx] else 0.0
+        )
         df[f"history_{REPERE}.{idx}.x"] = df[f"history_{REPERE}"].apply(
             lambda h: h[idx]["x"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "x" in h[idx] else 0.0
         )
@@ -104,10 +107,11 @@ if f"futur_{REPERE}" in df.columns:
 
 # Ajouter les features mémoire (derivee_history t-1 .. t-MEMORY_WINDOW)
 # pandas.json_normalize génère des colonnes nommées derivee_history.<idx>.<key>
-mem_X_cols = ["delta_t"]
+mem_X_cols = []
 for idx in range(MEMORY_WINDOW):
     mem_X_cols.extend(
         [
+            f"history_{REPERE}.{idx}.delta_t",
             f"history_{REPERE}.{idx}.x",
             f"history_{REPERE}.{idx}.y",
             f"history_{REPERE}.{idx}.theta",

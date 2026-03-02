@@ -21,7 +21,7 @@ THETA_SMOOTH_WINDOW = 15
 POSITION_SMOOTH_WINDOW = 10
 
 # nombre d'instants precedents (en plus du current dt) à utiliser pour la prédiction
-MEMORY_WINDOW = 10
+MEMORY_WINDOW = 2
 FUTUR_WINDOW = 1
 
 # tentative d'arrondir tout au cm pour eviter les mouvbements brownien dans le simu
@@ -92,7 +92,7 @@ def plot_smoothing_debug(times, raw_x, smooth_x, raw_y, smooth_y, raw_theta, smo
     plt.close(fig)
     print(f"Plot smoothing combiné sauvegardé: {out_path}")
 
-def passage_repere_robot(liste_W, position_robot):
+def passage_repere_robot(delta_t, liste_W, position_robot):
 
     new_x_W = [liste_W[k]["x"] for k in range(len(liste_W))]
     new_y_W = [liste_W[k]["y"] for k in range(len(liste_W))]
@@ -107,10 +107,10 @@ def passage_repere_robot(liste_W, position_robot):
     new_dy_R = [(liste_W[k]["dx"]*np.sin(new_theta_R[k]) + liste_W[k]["dy"]*np.cos(new_theta_R[k]))/1.5 + new_y_R[k] for k in range(len(liste_W))]
     new_dtheta_R = [liste_W[k]["dtheta"]/1.5 - (position_robot["theta"]-new_theta_R[k]) for k in range(len(liste_W))]
     
-    history_R = [{"x": new_x_R[k], "y": new_y_R[k], "theta": new_theta_R[k], "dx": new_dx_R[k], "dy": new_dy_R[k], "dtheta": new_dtheta_R[k]} for k in range(len(new_x_R))]
+    history_R = [{"delta_t": delta_t[k], "x": new_x_R[k], "y": new_y_R[k], "theta": new_theta_R[k], "dx": new_dx_R[k], "dy": new_dy_R[k], "dtheta": new_dtheta_R[k]} for k in range(len(new_x_R))]
     return history_R
 
-def passage_repere_monde(data):
+def passage_repere_monde(delta_t, data):
 
     new_x_W = [data[k]["x"] for k in range(len(data))]
     new_y_W = [data[k]["y"] for k in range(len(data))]
@@ -120,7 +120,7 @@ def passage_repere_monde(data):
     new_dy_W = [(np.sin(new_theta_W[k])*data[k]["dx"] + np.cos(new_theta_W[k])*data[k]["dy"])/1.5 + new_y_W[k] for k in range(len(data))] #/1.5 pour la visualisation
     new_dtheta_W = [(new_theta_W[k] + data[k]["dtheta"]/1.5) for k in range(len(data))]
 
-    history_W = [{"x": new_x_W[k], "y": new_y_W[k], "theta": new_theta_W[k], "dx": new_dx_W[k], "dy": new_dy_W[k], "dtheta": new_dtheta_W[k]} for k in range(len(new_x_W))]
+    history_W = [{"delta_t": delta_t[k], "x": new_x_W[k], "y": new_y_W[k], "theta": new_theta_W[k], "dx": new_dx_W[k], "dy": new_dy_W[k], "dtheta": new_dtheta_W[k]} for k in range(len(new_x_W))]
     return history_W
 
 def cleaner_data(datas_fichier_in):
@@ -173,9 +173,11 @@ def cleaner_data(datas_fichier_in):
 
     for instant in range(len(datas_out)):
         pos = datas_out[instant]["robot_pose"]
-        dt = datas_out[instant]["timestamp"] - datas_out[instant-1]["timestamp"]
+        if(instant+1<len(datas_out)):
+            dt = datas_out[instant+1]["timestamp"] - datas_out[instant]["timestamp"]
+        else:
+            dt = 0.03
         datas_out[instant]["delta_t"] = dt
-        dt = 0.033
 
         history_W = []
         for k in range(MEMORY_WINDOW):
@@ -186,11 +188,21 @@ def cleaner_data(datas_fichier_in):
                 history_W.append(dict(zero))
         datas_out[instant]["history_W"] = history_W
 
-    for instant in range(len(datas_out)): #création de history_W
-        datas_out[instant]["history_R"] = passage_repere_robot(datas_out[instant]["history_W"], datas_out[instant]["history_W"][0])
+    delta_t = [datas_out[k]["delta_t"] for k in range(len(datas_out))]
+
+    for instant in range(len(datas_out)): #création de history_R
+        delta_t_instant = [0.03]*len(delta_t)
+        for k in range(MEMORY_WINDOW):
+            if(instant-k>=0):
+                delta_t_instant[k] = delta_t[instant-k]
+        datas_out[instant]["history_R"] = passage_repere_robot(delta_t_instant, datas_out[instant]["history_W"], datas_out[instant]["history_W"][0])
     
     for instant in range(len(datas_out)): #passage des orders dans le repère monde
-        datas_out[instant]["history_W"] = passage_repere_monde(datas_out[instant]["history_W"])
+        delta_t_instant = [0.03]*len(delta_t)
+        for k in range(MEMORY_WINDOW):
+            if(instant-k>=0):
+                delta_t_instant[k] = delta_t[instant-k]
+        datas_out[instant]["history_W"] = passage_repere_monde(delta_t_instant, datas_out[instant]["history_W"])
     
     for instant in range(len(datas_out)): #ajout des états futur
         datas_out[instant]["futur_W"] = [zero]*FUTUR_WINDOW
@@ -198,7 +210,11 @@ def cleaner_data(datas_fichier_in):
             if instant + instant_futur + 1 < len(datas_out):
                 datas_out[instant]["futur_W"][instant_futur] = datas_out[instant + instant_futur + 1]["history_W"][0]
         
-        datas_out[instant]["futur_R"] = passage_repere_robot(datas_out[instant]["futur_W"], datas_out[instant]["history_W"][0])
+        delta_t_instant = [0.03]*len(delta_t)
+        for k in range(FUTUR_WINDOW):
+            if(instant+k+1<len(delta_t)):
+                delta_t_instant[k] = delta_t[instant+k+1]
+        datas_out[instant]["futur_R"] = passage_repere_robot(delta_t_instant, datas_out[instant]["futur_W"], datas_out[instant]["history_W"][0])
 
     # Nettoyage des clés
     keys_to_remove = ["ball_position", "robot_pose", "orders"]

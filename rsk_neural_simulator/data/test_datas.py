@@ -75,9 +75,10 @@ def exit():
     sys.exit()
 
 def prep_data_MLP(input, ref):
-    input_prep = [input["delta_t"]]
+    input_prep = []
     if(ref == 'R'):
         for k in range(len(input["history_R"])):
+            input_prep.append(input["history_R"][k]["delta_t"])
             input_prep.append(input["history_R"][k]["x"])
             input_prep.append(input["history_R"][k]["y"])
             input_prep.append(input["history_R"][k]["theta"])
@@ -86,6 +87,7 @@ def prep_data_MLP(input, ref):
             input_prep.append(input["history_R"][k]["dtheta"])
     elif(ref== 'W'):
         for k in range(len(input["history_W"])):
+            input_prep.append(input["history_R"][k]["delta_t"])
             input_prep.append(input["history_W"][k]["x"])
             input_prep.append(input["history_W"][k]["y"])
             input_prep.append(input["history_W"][k]["theta"])
@@ -141,10 +143,12 @@ def plot_data_terrain(data):
     futur_y_W = [data["futur_W"][k]["y"] for k in range(len(data["futur_W"]))]
 
     predictionW = test_MLP(data, 'W')
+    prediciton_x_W = [predictionW[3*k] for k in range(len(predictionW)//3)]
+    prediciton_y_W = [predictionW[3*k+1] for k in range(len(predictionW)//3)]
 
     pointsW.set_offsets(np.c_[new_x_W, new_y_W])
     futur_pointsW.set_offsets(np.c_[futur_x_W, futur_y_W])
-    prediction_pointsW.set_offsets(np.c_[predictionW[0], predictionW[1]])
+    prediction_pointsW.set_offsets(np.c_[prediciton_x_W, prediciton_y_W])
     orderW = [[[new_x_W[k],new_y_W[k]], [new_dx_W[k], new_dy_W[k]]] for k in range(len(new_dx_W))]
     order_collectionW.set_segments(orderW)
     orientationW = [[[new_x_W[k],new_y_W[k]], [new_x_W[k] + np.cos(new_theta_W[k]), (new_y_W[k] + np.sin(new_theta_W[k]))]] for k in range(len(new_x_W))]
@@ -169,7 +173,8 @@ def plot_data_robot(data):
     futur_theta_R = [data["futur_R"][k]["theta"] for k in range(len(data["futur_R"]))]
 
     prediction = test_MLP(data, 'R')
-    # print(f"prediction : {prediction}")
+    prediciton_x_R = [prediction[3*k] for k in range(len(prediction)//3)]
+    prediciton_y_R = [prediction[3*k+1] for k in range(len(prediction)//3)]
 
     points_futur_theta_R.set_offsets(np.c_[futur_theta_R[0], 0])
     prediction_theta_R.set_offsets(np.c_[prediction[2], 0])
@@ -177,7 +182,7 @@ def plot_data_robot(data):
 
     pointsR.set_offsets(np.c_[new_x_R, new_y_R])
     futur_pointsR.set_offsets(np.c_[futur_x_R, futur_y_R])
-    prediction_pointsR.set_offsets(np.c_[prediction[0], prediction[1]])
+    prediction_pointsR.set_offsets(np.c_[prediciton_x_R, prediciton_y_R])
     orderR = [[[new_x_R[k],new_y_R[k]], [ new_dx_R[k],  new_dy_R[k]]] for k in range(len(new_dx_R))]
     order_collectionR.set_segments(orderR)
     orientationR = [[[new_x_R[k],new_y_R[k]], [new_x_R[k] + np.cos(new_theta_R[k]), (new_y_R[k] + np.sin(new_theta_R[k]))]] for k in range(len(new_dx_R))]

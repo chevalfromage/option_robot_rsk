@@ -7,7 +7,7 @@ from rsk_neural_simulator.data.preparation_datas_positions import MEMORY_WINDOW,
 # Modèle pour la nouvelle disposition des données de février 2026. Avec fenetre passé et futur. Sans les vitesses mais avec les positions uniquement
 # fichier associé: preparation_datas_positions.py et test_datas.py 
 
-input_dim4 = 6*(MEMORY_WINDOW)+1  # 6 valeurs (x, y, theta, dx, dy, dtheta) par instant dans la mémoire
+input_dim4 = 7*(MEMORY_WINDOW)  # 6 valeurs (x, y, theta, dx, dy, dtheta) par instant dans la mémoire
 output_dim4 = 3*FUTUR_WINDOW
     
 #def du modèle
