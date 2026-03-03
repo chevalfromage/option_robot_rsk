@@ -14,7 +14,7 @@ from typing import List
 from .SimpleNN import SimpleNN, SimpleNN3, SimpleNNMemory, SimpleNN4
 from rsk_neural_simulator.data.preparation_datas_positions import MEMORY_WINDOW, FUTUR_WINDOW
 
-REPERE = 'W'
+REPERE = 'R'
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 base_path = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "data", "clean"))
@@ -27,10 +27,10 @@ print(TRAINED_MODEL_NAME)
 
 all_dfs = []
 
-json_pattern = os.path.join(base_path, "**", "*.json")
+json_pattern = os.path.join(base_path, "**", "*.json") # snake_in juste pour les tests sinon *
 
 for json_path in glob.glob(json_pattern, recursive=True):
-    if os.path.basename(json_path) == "cross.json":
+    if os.path.basename(json_path) == "cross.json" :
         continue 
 
     with open(json_path) as f:
@@ -81,6 +81,9 @@ if f"history_{REPERE}" in df.columns:
 if f"futur_{REPERE}" in df.columns:
     for idx in range(FUTUR_WINDOW):
         # extraire les clés pour ce pas mémoire
+        df[f"futur_{REPERE}.{idx}.dtheta"] = df[f"futur_{REPERE}"].apply(
+            lambda h: h[idx]["dtheta"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "dtheta" in h[idx] else 0.0
+        )
         df[f"futur_{REPERE}.{idx}.x"] = df[f"futur_{REPERE}"].apply(
             lambda h: h[idx]["x"] if isinstance(h, list) and len(h) > idx and isinstance(h[idx], dict) and "x" in h[idx] else 0.0
         )
@@ -128,19 +131,22 @@ fut_Y_cols = []
 for idx in range(FUTUR_WINDOW):
     fut_Y_cols.extend(
         [
+            f"futur_{REPERE}.{idx}.delta_t",
             f"futur_{REPERE}.{idx}.x",
             f"futur_{REPERE}.{idx}.y",
             f"futur_{REPERE}.{idx}.theta",
+            f"futur_{REPERE}.{idx}.dx",
+            f"futur_{REPERE}.{idx}.dy",
+            f"futur_{REPERE}.{idx}.dtheta",
         ]
     )
 Y_cols = fut_Y_cols
+print(f"Y_cols : {Y_cols}")
 
 # Supprimer colonnes non-pertinentes si présentes
 for col in ["path_name", "robot", "path_id", "timestamp"]:
     if col in df.columns:
         df = df.drop(columns=[col])
-
-print(df.columns)
 
 # Vérifier la présence des colonnes X_cols / Y_cols et créer les manquantes à zéro
 missing_X = [c for c in X_cols if c not in df.columns]
@@ -158,8 +164,6 @@ if missing_X or missing_Y:
 
 X = df[X_cols]
 Y = df[Y_cols]
-
-print(f"X : {X}")
 
 SEED = 42
 
@@ -221,7 +225,7 @@ train_loss_history: List[float] = []
 val_loss_history: List[float] = []
 
 # historique des loss par composantes pour identifier si une sortie dérive
-output_labels = ["x", "y", "theta"]
+output_labels = ["delta_t", "x", "y", "theta", "dx", "dy", "dtheta"]
 train_output_history = [[] for _ in output_labels]
 val_output_history = [[] for _ in output_labels]
 
@@ -231,6 +235,7 @@ for epoch in range(epochs):
     optimizer.zero_grad() 
 
     preds = model(X_train_t)
+    # print(f"preds : {preds}")
     train_loss = criterion(preds, Y_train_t)  #calcul de la loss à cette epoch
 
     train_loss.backward() #backpropagation
@@ -274,8 +279,6 @@ for epoch in range(epochs):
         print("early stopped at epoch :",epoch)
         break
     val_loss_prev = val_loss.item()
-
-
 
 model.eval()
 with torch.no_grad():

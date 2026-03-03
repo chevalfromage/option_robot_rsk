@@ -143,8 +143,8 @@ def plot_data_terrain(data):
     futur_y_W = [data["futur_W"][k]["y"] for k in range(len(data["futur_W"]))]
 
     predictionW = test_MLP(data, 'W')
-    prediciton_x_W = [predictionW[3*k] for k in range(len(predictionW)//3)]
-    prediciton_y_W = [predictionW[3*k+1] for k in range(len(predictionW)//3)]
+    prediciton_x_W = [predictionW[7*k+1] for k in range(len(predictionW)//7)]
+    prediciton_y_W = [predictionW[7*k+2] for k in range(len(predictionW)//7)]
 
     pointsW.set_offsets(np.c_[new_x_W, new_y_W])
     futur_pointsW.set_offsets(np.c_[futur_x_W, futur_y_W])
@@ -173,8 +173,8 @@ def plot_data_robot(data):
     futur_theta_R = [data["futur_R"][k]["theta"] for k in range(len(data["futur_R"]))]
 
     prediction = test_MLP(data, 'R')
-    prediciton_x_R = [prediction[3*k] for k in range(len(prediction)//3)]
-    prediciton_y_R = [prediction[3*k+1] for k in range(len(prediction)//3)]
+    prediciton_x_R = [prediction[7*k+1] for k in range(len(prediction)//7)]
+    prediciton_y_R = [prediction[7*k+2] for k in range(len(prediction)//7)]
 
     points_futur_theta_R.set_offsets(np.c_[futur_theta_R[0], 0])
     prediction_theta_R.set_offsets(np.c_[prediction[2], 0])
@@ -187,7 +187,7 @@ def plot_data_robot(data):
     order_collectionR.set_segments(orderR)
     orientationR = [[[new_x_R[k],new_y_R[k]], [new_x_R[k] + np.cos(new_theta_R[k]), (new_y_R[k] + np.sin(new_theta_R[k]))]] for k in range(len(new_dx_R))]
     orientation_futurR = [[[futur_x_R[k],futur_y_R[k]], [futur_x_R[k] + np.cos(futur_theta_R[k]), (futur_y_R[k] + np.sin(futur_theta_R[k]))]] for k in range(len(futur_x_R))]
-    orientation_predictionR = [[[prediction[0],prediction[1]], [prediction[0] + np.cos(prediction[2]), (prediction[1] + np.sin(prediction[2]))]]]
+    orientation_predictionR = [[[prediction[1],prediction[2]], [prediction[1] + np.cos(prediction[3]), (prediction[2] + np.sin(prediction[3]))]]]
     orientationR = orientationR + orientation_futurR + orientation_predictionR
     orientation_collectionR.set_segments(orientationR)
     fig.canvas.draw()

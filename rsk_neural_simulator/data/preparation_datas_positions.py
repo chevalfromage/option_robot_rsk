@@ -21,8 +21,8 @@ THETA_SMOOTH_WINDOW = 15
 POSITION_SMOOTH_WINDOW = 10
 
 # nombre d'instants precedents (en plus du current dt) à utiliser pour la prédiction
-MEMORY_WINDOW = 2
-FUTUR_WINDOW = 1
+MEMORY_WINDOW = 10
+FUTUR_WINDOW = 2
 
 # tentative d'arrondir tout au cm pour eviter les mouvbements brownien dans le simu
 def round_values(value, ndigits=3):
