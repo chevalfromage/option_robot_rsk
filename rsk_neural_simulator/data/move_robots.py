@@ -17,10 +17,10 @@ from .paths import DEFAULT_PATHS, BasePath
 DT = 1 / 30  # 30 FPS
 RAW_ROOT = Path("raw")
 ROBOT_MAP = {
-    "g1": "green1",
-    "g2": "green2",
+    # "g1": "green1",
+    # "g2": "green2",
     "b1": "blue1",
-    "b2": "blue2",
+    # "b2": "blue2",
 }
 PARKING_POSES = {
     "g1": (0.2, rsk_constants.field_width / 2 - 20, -math.pi / 2),

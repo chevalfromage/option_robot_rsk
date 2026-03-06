@@ -225,7 +225,7 @@ train_loss_history: List[float] = []
 val_loss_history: List[float] = []
 
 # historique des loss par composantes pour identifier si une sortie dérive
-output_labels = ["delta_t", "x", "y", "theta", "dx", "dy", "dtheta"]
+output_labels = ["delta_t", "x", "y", "theta"]
 train_output_history = [[] for _ in output_labels]
 val_output_history = [[] for _ in output_labels]
 
@@ -235,8 +235,17 @@ for epoch in range(epochs):
     optimizer.zero_grad() 
 
     preds = model(X_train_t)
-    # print(f"preds : {preds}")
-    train_loss = criterion(preds, Y_train_t)  #calcul de la loss à cette epoch
+    preds_recursive = preds.detach()
+    X_train_recursive = X_train_t
+
+    # for k in range(MEMORY_WINDOW):
+    #     X_train_recursive = torch.cat([preds_recursive[:, :7], X_train_recursive[:, :14]], dim=-1)
+    #     preds_recursive = model(X_train_recursive)
+    # train_loss = criterion(preds_recursive[:, :7], Y_train_t[:, -7:])
+
+    # train_loss = criterion(preds[:, :7], Y_train_t[:, :7])
+    # train_loss = criterion(preds[:, 1:4], Y_train_t[:, 1:4]   )
+    train_loss = criterion(preds, Y_train_t)
 
     train_loss.backward() #backpropagation
     optimizer.step()
@@ -245,6 +254,7 @@ for epoch in range(epochs):
     model.eval()
     with torch.no_grad():
         val_preds = model(X_val_t)
+        # val_loss = criterion(val_preds[:, :7], Y_val_t[:, :7])
         val_loss = criterion(val_preds, Y_val_t)
 
     # stocker les MSE loss totales
@@ -271,13 +281,13 @@ for epoch in range(epochs):
         )
         
     # test l'early stopping
-    if(abs(val_loss_prev- val_loss.item())<=0.00001):
-        counter_loss_stop+=1
-    else:
-        counter_loss_stop=0
-    if(counter_loss_stop>=early_stop):
-        print("early stopped at epoch :",epoch)
-        break
+    # if(abs(val_loss_prev- val_loss.item())<=0.00001):
+    #     counter_loss_stop+=1
+    # else:
+    #     counter_loss_stop=0
+    # if(counter_loss_stop>=early_stop):
+    #     print("early stopped at epoch :",epoch)
+    #     break
     val_loss_prev = val_loss.item()
 
 model.eval()

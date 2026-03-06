@@ -21,9 +21,9 @@ if str(PROJECT_ROOT) not in sys.path:
     
 
 TRAINED_MODEL_DIR = PROJECT_ROOT / "rsk_neural_simulator" / "model" / "trained_model"
-MODEL_PATH = TRAINED_MODEL_DIR / "simple_nn_4R.pth"
-X_SCALER_PATH = TRAINED_MODEL_DIR / "x_scaler_4R.pkl"
-Y_SCALER_PATH = TRAINED_MODEL_DIR / "y_scaler_4R.pkl"
+MODEL_PATH = TRAINED_MODEL_DIR / "simple_nn_4R.pth" #"simple_nn_4_demoR.pth"
+X_SCALER_PATH = TRAINED_MODEL_DIR / "x_scaler_4R.pkl" #"x_scaler_4_demoR.pkl"
+Y_SCALER_PATH = TRAINED_MODEL_DIR / "y_scaler_4R.pkl" #"y_scaler_4_demoR.pkl"
 
 import torch
 from rsk_neural_simulator.model.SimpleNN import SimpleNN, SimpleNN3, SimpleNNMemory, SimpleNN4
@@ -37,7 +37,7 @@ SIMULATION_CONFIGURATION = "side"
 # seulement les robots listés ici vont spawn dans la simulation
 # mettre vide pour tous les faire spawn
 #SIMULATION_MARKERS = {"green": {1}}
-SIMULATION_MARKERS = {"green": {1}}
+SIMULATION_MARKERS = {"green": {1}, "blue" : {1}}
 
 
 ROBOT_VELOCITY_MODEL = "mlp_4" #"history"  # "original", "mlp", "history" ou "trig", "mlp_4"
@@ -180,7 +180,7 @@ class SimulatedRobot(SimulatedObject):
     def _update_velocity_original(self, dt: float) -> None:
         target_velocity_robot = self.control_cmd
 
-        print(f"self.position : {self.position}, target_velocity_robot : {target_velocity_robot}")
+        # print(f"self.position : {self.position}, target_velocity_robot : {target_velocity_robot}")
 
         # mat de transformation du repère robot au repère monde
         T_world_robot = utils.frame(tuple(self.position))
@@ -198,7 +198,6 @@ class SimulatedRobot(SimulatedObject):
             constants.max_angular_acceleration * dt,
         )
 
-        #print(f"order : {self.control_cmd} , self.velocity : {self.velocity}")
 
     # fonction qu'on a ajouté pour compute next_speed,  via un MLP qui prend en entrée : 
     # ordre de vitesse + vitesse actuelle , et qui prédit la prochaine vitesse
@@ -366,67 +365,87 @@ class SimulatedRobot(SimulatedObject):
 
 
     def _update_velocity_MLP_4(self, dt: float) -> None:
-        if dt <= 0:
-            # Fallback to legacy behaviour if the simulator ever passes dt<=0
-            self._update_velocity_original(max(dt, 0.0))
-            return
 
-        orderR = self.control_cmd
+        if self.marker == "blue1":
+            if dt <= 0:
+                # Fallback to legacy behaviour if the simulator ever passes dt<=0
+                self._update_velocity_original(max(dt, 0.0))
+                return
+            orderR = self.control_cmd
 
-        position_robot_W = self.position
+            position_robot_W = self.position
 
-        # Current velocity expressed in world. Convert to robot frame to match training features.
-        T_world_robot = utils.frame(tuple(position_robot_W))
-        R_robot_world = T_world_robot[:2, :2]  # rotation from robot -> world
+            T_world_robot = utils.frame(tuple(position_robot_W))
+            R_robot_world = T_world_robot[:2, :2]  # rotation robot -> world
 
-        order_xy = R_robot_world @ orderR[:2]
-        orderW = [order_xy[0] + position_robot_W[0], order_xy[1] + position_robot_W[1], orderR[2] + position_robot_W[2]]
+            order_xy = R_robot_world @ orderR[:2]
+            orderW = [order_xy[0] + position_robot_W[0], order_xy[1] + position_robot_W[1], orderR[2] + position_robot_W[2]]
 
-        combined = np.array([dt, position_robot_W[0], position_robot_W[1], position_robot_W[2], orderW[0], orderW[1], orderW[2]])
-        self.historyW.appendleft(combined)
+            combined = np.array([dt, position_robot_W[0], position_robot_W[1], position_robot_W[2], orderW[0], orderW[1], orderW[2]])
+            self.historyW.appendleft(combined)
 
-        history_step = []
-        for k in range(len(self.historyW)):
-            history_xy = R_robot_world.T @ self.historyW[k][1:3]  # world -> robot
-            order_xy = R_robot_world.T @ self.historyW[k][4:6]
-            history_step.append({"delta_t" : self.historyW[k][0], "x" : history_xy[0], "y" : history_xy[1], "theta" : self.historyW[k][3], "dx" : order_xy[0], "dy" : order_xy[1], "dtheta" : self.historyW[k][6]})
-            history_0_R = history_step[0]
-        history_R = history_step
-        history_0_R = history_R[0].copy()
-        for k in range(len(history_step)):
-            history_R[k]["x"] -= history_0_R["x"]
-            history_R[k]["y"] -= history_0_R["y"]
-            history_R[k]["theta"] -= history_0_R["theta"]
-            history_R[k]["dx"] -= history_0_R["x"]
-            history_R[k]["dy"] -= history_0_R["y"]
-            history_R[k]["dtheta"] -= history_0_R["theta"]
+            history_step = []
+            for k in range(len(self.historyW)):
+                history_xy = R_robot_world.T @ self.historyW[k][1:3]  # world -> robot
+                order_xy = R_robot_world.T @ self.historyW[k][4:6]
+                history_step.append({"delta_t" : self.historyW[k][0], "x" : history_xy[0], "y" : history_xy[1], "theta" : self.historyW[k][3], "dx" : order_xy[0], "dy" : order_xy[1], "dtheta" : self.historyW[k][6]})
+                history_0_R = history_step[0]
+            history_R = history_step
+            history_0_R = history_R[0].copy()
+            for k in range(len(history_step)):
+                history_R[k]["x"] -= history_0_R["x"]
+                history_R[k]["y"] -= history_0_R["y"]
+                history_R[k]["theta"] -= history_0_R["theta"]
+                history_R[k]["dx"] -= history_0_R["x"]
+                history_R[k]["dy"] -= history_0_R["y"]
+                history_R[k]["dtheta"] -= history_0_R["theta"]
 
-        nn_input = np.array([
-        [
-            history_R[k]["delta_t"], # dt probablement désynchronisé d'un step mais ne doit pas changer grand chose car quasi constant dans le simulateur
-            history_R[k]["x"],
-            history_R[k]["y"],
-            history_R[k]["theta"],
-            history_R[k]["dx"],
-            history_R[k]["dy"],
-            history_R[k]["dtheta"] 
-        ] for k in range(MEMORY_WINDOW)
-        ]).reshape(1, -1)
+            nn_input = np.array([
+            [
+                history_R[k]["delta_t"], # dt probablement désynchronisé d'un step mais ne doit pas changer grand chose car quasi constant dans le simulateur
+                history_R[k]["x"],
+                history_R[k]["y"],
+                history_R[k]["theta"],
+                history_R[k]["dx"],
+                history_R[k]["dy"],
+                history_R[k]["dtheta"] 
+            ] for k in range(MEMORY_WINDOW)
+            ]).reshape(1, -1)
 
-        x_scaled = self.x_scaler.transform(nn_input)
-        x_tensor = torch.tensor(x_scaled, dtype=torch.float32)
-        with torch.no_grad():
-            y_scaled = self.model(x_tensor)
-        prediction = self.y_scaler.inverse_transform(y_scaled.cpu().numpy())[0]
+            x_scaled = self.x_scaler.transform(nn_input)
+            x_tensor = torch.tensor(x_scaled, dtype=torch.float32)
+            with torch.no_grad():
+                y_scaled = self.model(x_tensor)
+            prediction = self.y_scaler.inverse_transform(y_scaled.cpu().numpy())[0]
 
-        prediciton_R = prediction
+            prediciton_R = prediction
 
-        # print(f"prediction_x_R : {prediction_x_R}, prediction_y_R : {prediction_y_R} ,  prediction_theta_R : {prediction_theta_R}")
-        prediction_xy_W = R_robot_world @ prediciton_R[1:3]
-        prediction_W = {"x" : prediction_xy_W[0] + position_robot_W[0], "y" : prediction_xy_W[1] + position_robot_W[1], "theta" : prediciton_R[3] + position_robot_W[2]}
+            prediction_xy_W = R_robot_world @ prediciton_R[1:3]
+            prediction_W = {"x" : prediction_xy_W[0] + position_robot_W[0], "y" : prediction_xy_W[1] + position_robot_W[1], "theta" : prediciton_R[3] + position_robot_W[2]}
 
-        self.velocity = np.array([(prediction_W["x"] - position_robot_W[0])/dt, (prediction_W["y"] - position_robot_W[1])/dt, (prediction_W["theta"] - position_robot_W[2])/dt])
+            self.velocity = np.array([(prediction_W["x"] - position_robot_W[0])/dt, (prediction_W["y"] - position_robot_W[1])/dt, (prediction_W["theta"] - position_robot_W[2])/dt])
+        else : 
+            target_velocity_robot = self.control_cmd
 
+            # print(f"self.position : {self.position}, target_velocity_robot : {target_velocity_robot}")
+
+            # mat de transformation du repère robot au repère monde
+            T_world_robot = utils.frame(tuple(self.position))
+            target_velocity_world = T_world_robot[:2, :2] @ target_velocity_robot[:2]
+
+            # fait converger la vitesse actuelle vers la vitesse cible en limitant l'accélération
+            self.velocity[:2] = utils.update_limit_variation(
+                self.velocity[:2],
+                target_velocity_world,
+                constants.max_linear_acceleration * dt,
+            )
+            self.velocity[2:] = utils.update_limit_variation(
+                self.velocity[2:],
+                target_velocity_robot[2:],
+                constants.max_angular_acceleration * dt,
+            )
+
+        
     def update_velocity(self, dt: float) -> None:
         """Point d'enrtrée unique pour la MAJ des vitesses, selon le modèle choisi."""
         if ROBOT_VELOCITY_MODEL == "trig":
@@ -473,7 +492,18 @@ class RobotSim(robot.Robot):
         )
 
     def _control_mlp(self, dx: float, dy: float, dturn: float) -> None:
+        print("_control_mlp")
         self.object.control_cmd = np.array([dx/1.5, dy/1.5, dturn/1.5])
+
+    def _control_mlp4(self, dx: float, dy: float, dturn: float) -> None:
+        # print(f"self.marker : {self.marker}, dx : {dx}, dy : {dy}, dtheta : {dturn}")
+        if self.marker == "blue1":
+            self.object.control_cmd = np.array([dx/1.5, dy/1.5, dturn/1.5 +1.48]) # + 1.48 fait -1.2 à dturn/1.5 pour stabiliser pour l'instant. Je ne sais pas pourquoi. probablement problème dans les datas.
+            print(f"self.object.control_cmd : {self.object.control_cmd}")
+        else :  
+            self.object.control_cmd = kinematics.clip_target_order(
+                np.array([dx, dy, dturn])
+            ) 
 
     def _control_nn(self, dx: float, dy: float, dturn: float) -> None:
         """Prépare les commandes pour le NN afin de matcher le dataset d'entraînement."""
@@ -494,7 +524,7 @@ class RobotSim(robot.Robot):
         elif ROBOT_VELOCITY_MODEL == "history":
             self._control_mlp(dx, dy, dturn)
         elif ROBOT_VELOCITY_MODEL == "mlp_4":
-            self._control_mlp(dx, dy, dturn)
+            self._control_mlp4(dx, dy, dturn)
         elif ROBOT_VELOCITY_MODEL == "original":
             self._control_original(dx, dy, dturn)
         else:
@@ -602,6 +632,7 @@ class Simulator:
             # Execute actions (e.g: kick)
 
             # Update object velocity (e.g: deceleration, taking commands in account)
+            
             obj.update_velocity(dt)
 
             if norm(obj.velocity) > 0:

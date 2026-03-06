@@ -85,7 +85,7 @@ def record_paths_for_robot(client: rsk.Client, robot_key: str) -> None:
 
             if finished:
                 break
-        
+
         #construction du chemin ou stocker la data
         destination = RAW_ROOT / robot_key / f"{path.name}.json"
         destination.parent.mkdir(parents=True, exist_ok=True)
