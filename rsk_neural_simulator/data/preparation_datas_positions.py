@@ -52,7 +52,6 @@ def smooth_series(values, window: int, circular: bool = False):
             smoothed.append(float(np.mean(window_vals)))
     return smoothed
 
-
 def should_plot(dataset_name: str, plot_key: str):
     """Determine si on doit plotter ce dataset en fonction du filtre."""
     if PLOT_DATASET_NAME is not None and dataset_name != PLOT_DATASET_NAME:
@@ -62,7 +61,6 @@ def should_plot(dataset_name: str, plot_key: str):
         return False
     _PLOT_KEYS_DONE.add(key)
     return True
-
 
 def plot_smoothing_debug(times, raw_x, smooth_x, raw_y, smooth_y, raw_theta, smooth_theta, dataset_name: str):
     """Plot les résultats du lissage pour debug/ diapo"""
@@ -147,9 +145,9 @@ def cleaner_data(datas_fichier_in):
     #passage de x et y dans le repère robot
     x_series_raw = [entry["robot_pose"]["x"] for entry in datas_out]
     y_series_raw = [entry["robot_pose"]["y"] for entry in datas_out]
-    theta_series = smooth_series(theta_series_raw, THETA_SMOOTH_WINDOW, circular=True) # inutile ?
-    x_series = smooth_series(x_series_raw, POSITION_SMOOTH_WINDOW) # inutile ?
-    y_series = smooth_series(y_series_raw, POSITION_SMOOTH_WINDOW) # inutile ?
+    # theta_series = smooth_series(theta_series_raw, THETA_SMOOTH_WINDOW, circular=True) # inutile ?
+    # x_series = smooth_series(x_series_raw, POSITION_SMOOTH_WINDOW) # inutile ?
+    # y_series = smooth_series(y_series_raw, POSITION_SMOOTH_WINDOW) # inutile ?
     theta_series = theta_series_raw
     x_series = x_series_raw
     y_series = y_series_raw

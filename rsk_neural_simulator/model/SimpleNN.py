@@ -15,15 +15,15 @@ class SimpleNN4(nn.Module):
     def __init__(self, input_dimension=input_dim4):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(input_dimension, 256),  #entrées
+            nn.Linear(input_dimension, 64),  #entrées
             nn.Dropout(0.3),
-            nn.Linear(256, 256), 
+            nn.Linear(64, 64), 
             nn.ReLU(),
-            nn.Linear(256, 256), 
+            nn.Linear(64, 64), 
             nn.ReLU(),
-            nn.Linear(256, 256), 
+            nn.Linear(64, 64), 
             nn.ReLU(),
-            nn.Linear(256, output_dim4)  # couche de sortie
+            nn.Linear(64, output_dim4)  # couche de sortie
         )
 
     def forward(self, x):

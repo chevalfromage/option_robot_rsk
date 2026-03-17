@@ -105,14 +105,14 @@ def test_MLP(input, ref):
 
     model = SimpleNN4()
     if(ref == 'W'):
-        model.load_state_dict(torch.load("rsk_neural_simulator/model/trained_model/simple_nn_4W.pth"))
-        x_scaler = joblib.load("rsk_neural_simulator/model/trained_model/x_scaler_4W.pkl")
-        y_scaler = joblib.load("rsk_neural_simulator/model/trained_model/y_scaler_4W.pkl")
+        model.load_state_dict(torch.load("rsk_neural_simulator/model/trained_model/simple_nn_4_demoW.pth"))
+        x_scaler = joblib.load("rsk_neural_simulator/model/trained_model/x_scaler_4_demoW.pkl")
+        y_scaler = joblib.load("rsk_neural_simulator/model/trained_model/y_scaler_4_demoW.pkl")
         print("world")
     elif(ref == 'R'):
-        model.load_state_dict(torch.load("rsk_neural_simulator/model/trained_model/simple_nn_4R.pth"))
-        x_scaler = joblib.load("rsk_neural_simulator/model/trained_model/x_scaler_4R.pkl")
-        y_scaler = joblib.load("rsk_neural_simulator/model/trained_model/y_scaler_4R.pkl")
+        model.load_state_dict(torch.load("rsk_neural_simulator/model/trained_model/simple_nn_4_demoR.pth"))
+        x_scaler = joblib.load("rsk_neural_simulator/model/trained_model/x_scaler_4_demoR.pkl")
+        y_scaler = joblib.load("rsk_neural_simulator/model/trained_model/y_scaler_4_demoR.pkl")
     else:
         print("référentiel inexistant")
     model.eval()
