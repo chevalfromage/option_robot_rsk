@@ -9,86 +9,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-RAW_ROOT = SCRIPT_DIR / "raw"
-CLEAN_ROOT = SCRIPT_DIR / "clean"
-PLOTS_ROOT = SCRIPT_DIR / "plots"
-PLOTS_ROOT.mkdir(parents=True, exist_ok=True)
-PLOT_DATASET_NAME = "random_waypoints" #mettre à none pour tout plotter
-_PLOT_KEYS_DONE: set[str] = set()
-
-THETA_SMOOTH_WINDOW = 15
-POSITION_SMOOTH_WINDOW = 10
-
 # nombre d'instants precedents (en plus du current dt) à utiliser pour la prédiction
-MEMORY_WINDOW = 3 
-FUTUR_WINDOW = 2 
-
-# tentative d'arrondir tout au cm pour eviter les mouvbements brownien dans le simu
-def round_values(value, ndigits=3):
-    if isinstance(value, float):
-        return round(value, ndigits)
-    if isinstance(value, dict):
-        return {k: round_values(v, ndigits) for k, v in value.items()}
-    if isinstance(value, list):
-        return [round_values(v, ndigits) for v in value]
-    return value
-
-def smooth_series(values, window: int, circular: bool = False):
-    """Lisse une série de valeurs avec une moyenne glissante."""
-    if window <= 1:
-        return [float(v) for v in values]
-    half_window = window // 2
-    smoothed = []
-    for idx in range(len(values)):
-        start = max(0, idx - half_window)
-        end = min(len(values), idx + half_window + 1)
-        window_vals = values[start:end]
-        if circular:
-            mean_cos = float(np.mean(np.cos(window_vals)))
-            mean_sin = float(np.mean(np.sin(window_vals)))
-            smoothed.append(float(np.arctan2(mean_sin, mean_cos)))
-        else:
-            smoothed.append(float(np.mean(window_vals)))
-    return smoothed
-
-def should_plot(dataset_name: str, plot_key: str):
-    """Determine si on doit plotter ce dataset en fonction du filtre."""
-    if PLOT_DATASET_NAME is not None and dataset_name != PLOT_DATASET_NAME:
-        return False
-    key = f"{dataset_name}:{plot_key}"
-    if key in _PLOT_KEYS_DONE:
-        return False
-    _PLOT_KEYS_DONE.add(key)
-    return True
-
-def plot_smoothing_debug(times, raw_x, smooth_x, raw_y, smooth_y, raw_theta, smooth_theta, dataset_name: str):
-    """Plot les résultats du lissage pour debug/ diapo"""
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-
-    axes[0].plot(raw_x, raw_y, label="traj. brute", linewidth=1)
-    axes[0].plot(smooth_x, smooth_y, label="traj. lissée", linewidth=1.2)
-    axes[0].set_xlabel("x [m]")
-    axes[0].set_ylabel("y [m]")
-    axes[0].set_title("Trajectoire XY")
-    axes[0].set_aspect("equal", adjustable="box")
-    axes[0].grid(True, linestyle=":", alpha=0.5)
-    axes[0].legend()
-
-    axes[1].plot(times, raw_theta, label="theta brut", linewidth=1)
-    axes[1].plot(times, smooth_theta, label="theta lissé", linewidth=1.2)
-    axes[1].set_xlabel("timestamp [s]")
-    axes[1].set_ylabel("theta [rad]")
-    axes[1].set_title("Theta vs temps")
-    axes[1].grid(True, linestyle=":", alpha=0.5)
-    axes[1].legend()
-
-    fig.suptitle(f"Smoothing debug - {dataset_name}")
-    fig.tight_layout()
-    out_path = PLOTS_ROOT / f"smoothing_{dataset_name}.png"
-    fig.savefig(out_path)
-    plt.close(fig)
-    print(f"Plot smoothing combiné sauvegardé: {out_path}")
+MEMORY_WINDOW = 2
+FUTUR_WINDOW = 1
 
 def passage_repere_robot(delta_t, liste_W, position_robot):
 
@@ -121,10 +44,22 @@ def passage_repere_monde(delta_t, data):
     history_W = [{"delta_t": delta_t[k], "x": new_x_W[k], "y": new_y_W[k], "theta": new_theta_W[k], "dx": new_dx_W[k], "dy": new_dy_W[k], "dtheta": new_dtheta_W[k]} for k in range(len(new_x_W))]
     return history_W
 
+def sort_timestamps(states, commands):
+    indices_states = []
+    indices_commands = []
+    i, j =0, 0
+    while i < len(states) and j <len(commands):
+        if states[i]['timestamp']< commands[j]['timestamp']:
+            indices_states.append(i+j)
+            i +=1
+        else:
+            indices_commands.append(i+j)
+            j +=1
+            
 def cleaner_data(datas_fichier_in):
 
     datas_fichier_in = Path(datas_fichier_in)
-    datas_fichier_out = CLEAN_ROOT / datas_fichier_in.relative_to(RAW_ROOT)
+    datas_fichier_out = Path(f"out_{datas_fichier_in}")
 
     # Lecture du JSON
     with open(datas_fichier_in, 'r', encoding='utf-8') as fichier:
@@ -133,22 +68,22 @@ def cleaner_data(datas_fichier_in):
     datas_out = []
 
     #Supprimer données sans rafraîchissement de la cam
-    for instant in range(len(datas)):
-        pos_prev = datas[instant-1]["robot_pose"]
-        pos = datas[instant]["robot_pose"]
+    print(datas['commands'])
 
-        diff = {axe: pos[axe] - pos_prev[axe] for axe in pos}
+    sort_timestamps(datas['states'], datas['commands'])
+
+    for instant in range(len(datas['commands'])):
+        command_prev = datas['commands'][instant-1]["orders"]
+        command = datas[instant]["robot_pose"]
+
+        diff = {axe: command[axe] - command_prev[axe] for axe in command}
         if diff["x"] != 0 and diff["y"] != 0 and diff["theta"] != 0:
             datas_out.append(datas[instant])
 
-    theta_series_raw = [entry["robot_pose"]["theta"] for entry in datas_out]
-    #passage de x et y dans le repère robot
-    x_series_raw = [entry["robot_pose"]["x"] for entry in datas_out]
-    y_series_raw = [entry["robot_pose"]["y"] for entry in datas_out]
+    theta_series = [entry["robot_pose"]["theta"] for entry in datas_out]
+    x_series = [entry["robot_pose"]["x"] for entry in datas_out]
+    y_series = [entry["robot_pose"]["y"] for entry in datas_out]
 
-    theta_series = theta_series_raw
-    x_series = x_series_raw
-    y_series = y_series_raw
     theta_times = [entry["timestamp"] for entry in datas_out]
 
     orders = [datas_out[(k+1)%len(datas_out)]["orders"] for k in range(len(datas_out))]
@@ -226,7 +161,6 @@ def cleaner_data(datas_fichier_in):
 
 
 if __name__ == "__main__":
-
-    for json_file in RAW_ROOT.rglob("*.json"):
-        print(f"Traitement : {json_file}")
-        cleaner_data(json_file)
+    json_file = Path("rsk_neural_simulator\data\data.json")
+    print(f"Traitement : {json_file}")
+    cleaner_data(json_file)
